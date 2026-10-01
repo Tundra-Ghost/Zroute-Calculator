@@ -4,7 +4,7 @@ A responsive, browser-based progress tracker and planning dashboard for **Z Rout
 
 The hero directory is grouped into Warrior, Assault, and Tactical classes and records rarity, formation type, ownership, HQ-based level caps, five-star shard progress, and the quality of all four equipment pieces. The survivor directory supports custom Other, SSR, and Mythic survivors, building assignments, recorded benefits, and the same five-part star system.
 
-Every tracked upgrade can have a target. The planner totals resources and time from verified per-level records and clearly identifies incomplete data instead of guessing. Upgrade records live in browser storage and can be created, updated, exported, or imported from the **Upgrade data** tab. `data/upgrade-costs.json` documents the portable database schema and is intentionally empty until community values are verified.
+Every tracked upgrade can have a target. Missing levels are clickable throughout the trackers, opening a pre-filled observation editor. Enter the costs and time shown in game plus any active personal, alliance, statue, survivor, or event reductions. The database retains both that raw observation and normalized base estimates, making observations comparable and suitable for later formula analysis. Records live in browser storage and can be edited, exported, or imported from the **Upgrade data** tab. `data/upgrade-costs.json` documents the portable database schema and is intentionally empty until community values are verified.
 
 ## Run locally
 
@@ -16,14 +16,14 @@ Then visit `http://localhost:4173`. Progress is stored in the browser's `localSt
 
 ## Upgrade data format
 
-Each record identifies a category, exact item name or ID, destination level, resource costs, duration in minutes, and an optional verification source. Re-saving the same category, item, and destination level updates that record. Import/export uses the following envelope:
+Each record identifies a category, exact item name or ID, destination level, normalized resource costs, normalized duration in minutes, and an optional verification source. New records also include an `observation` containing the values displayed in game, active reduction percentages, and modifier context. Re-saving the same category, item, and destination level updates that record. Import/export remains compatible with older records that contain only base values:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "updatedAt": "2026-10-01T00:00:00.000Z",
   "records": []
 }
 ```
 
-The tracker deliberately does not estimate power, costs, times, requirements, or bonuses. All progress and upgrade data is stored only in the player's browser unless they explicitly export it.
+Normalization is explicitly labeled as an estimate because the game's rounding rules are not yet known; the original observation is never discarded. The tracker does not invent missing requirements or bonuses. All progress and upgrade data is stored only in the player's browser unless it is explicitly exported.

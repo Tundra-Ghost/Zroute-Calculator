@@ -167,6 +167,16 @@ function formatDuration(minutes) {
   const days = Math.floor(minutes / 1440); const hours = Math.floor((minutes % 1440) / 60); const mins = minutes % 60;
   return [days && `${days}d`, hours && `${hours}h`, mins && `${mins}m`].filter(Boolean).join(' ');
 }
+function baseFromObserved(value, reduction) {
+  const divisor = 1 - Math.min(99.99, Math.max(0, Number(reduction) || 0)) / 100;
+  return Math.round((Number(value) || 0) / divisor);
+}
+function firstMissingLevel(category, item, current, target) {
+  for (let level = current + 1; level <= target; level += 1) {
+    if (!state.upgradeRecords.some(record => record.category === category && record.item === item && record.level === level)) return level;
+  }
+  return current + 1;
+}
 function calculateUpgrade(category, item, current, target) {
   const records = state.upgradeRecords.filter(record => record.category === category && record.item === item && record.level > current && record.level <= target);
   const total = records.reduce((result, record) => {
@@ -183,7 +193,8 @@ function planSummary(category, item, current, target) {
   const plan = calculateUpgrade(category, item, current, target);
   if (!plan.needed || plan.found !== plan.needed) {
     const known = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
-    return `<small class="plan-missing">${known ? `${known} · ` : ''}COST DATA ${plan.found}/${plan.needed} LEVELS · <a href="#data">ADD DATA</a></small>`;
+    const missingLevel = firstMissingLevel(category, item, current, target);
+    return `<small class="plan-missing">${known ? `${known} · ` : ''}COST DATA ${plan.found}/${plan.needed} LEVELS · <button type="button" class="missing-data-button" data-add-record data-category="${category}" data-item="${item}" data-level="${missingLevel}">FILL LEVEL ${missingLevel}</button></small>`;
   }
   const resources = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
   return `<small class="plan-ready">${resources || 'No resources'} · ◷ ${formatDuration(plan.minutes)}</small>`;
@@ -228,6 +239,7 @@ function researchPage() {
           <span class="duration">◷ <b>Completion time</b></span>
         </div>
         <small>Each upgrade can use one or more resources and has a set completion time.</small>
+        <button class="button primary research-add-data" type="button" data-add-record data-category="research" data-item="${selectedTree.name}" data-level="1">+ Add research node data</button>
       </section>`;
   }
 
@@ -274,10 +286,46 @@ function survivorsPage() {
 
 function dataPage() {
   pageHeader('PLANNING DATABASE', 'Upgrade data');
-  return `<section class="page-intro"><div><p class="eyebrow">COMMUNITY DATA</p><h2>Upgrade cost database</h2><p>Add one verified record for each destination level. Target planners sum every matching level without estimating missing data.</p></div><div class="completion-ring"><strong>${state.upgradeRecords.length}</strong><span>LOCAL RECORDS</span></div></section>
-    <section class="data-layout"><form id="upgradeForm" class="data-form"><header><p class="eyebrow">ADD OR UPDATE</p><h2>Upgrade record</h2></header><div class="data-fields"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star tokens</option><option value="survivor-star">Survivor star tokens</option></select></label><label>ITEM<input name="item" required list="upgradeItems" placeholder="Exact item name or ID"><datalist id="upgradeItems">${[...buildings.map(x=>x.name),...heroes.map(x=>x.id),...state.survivors.map(x=>x.id)].map(x=>`<option value="${x}">`).join('')}</datalist></label><label>DESTINATION LEVEL / STEP<input name="level" type="number" min="1" required></label>${resourceNames.map(name=>`<label>${name.toUpperCase()}<input name="${name}" type="number" min="0" value="0"></label>`).join('')}<label>TIME (MINUTES)<input name="minutes" type="number" min="0" value="0"></label><label class="wide">SOURCE / NOTE<input name="source" maxlength="160" placeholder="Where this value was verified"></label></div><button class="button primary" type="submit">Save verified record</button></form>
-    <section class="data-records"><header><div><p class="eyebrow">LOCAL DATABASE</p><h2>Verified records</h2></div><div><button class="button secondary" id="exportData">Export JSON</button><label class="button secondary import-button">Import JSON<input id="importData" type="file" accept="application/json"></label></div></header>${state.upgradeRecords.length ? `<div class="record-table">${state.upgradeRecords.map((record,index)=>`<article><div><span>${record.category}</span><b>${record.item} → ${record.level}</b><small>${resourceNames.filter(name=>record.resources?.[name]).map(name=>`${formatNumber(record.resources[name])} ${name}`).join(' · ') || 'No resources'} · ${formatDuration(record.minutes)}${record.source ? ` · ${record.source}` : ''}</small></div><button data-delete-record="${index}" aria-label="Delete record">×</button></article>`).join('')}</div>` : '<div class="empty-records">No records yet. The bundled database intentionally starts empty until costs are verified.</div>'}</section></section>
+  return `<section class="page-intro"><div><p class="eyebrow">COMMUNITY DATA</p><h2>Upgrade cost database</h2><p>Capture the values shown in game and any active reductions. The planner uses estimated base values so observations made with different bonuses remain comparable.</p></div><div class="completion-ring"><strong>${state.upgradeRecords.length}</strong><span>LOCAL RECORDS</span></div></section>
+    <section class="data-layout"><div class="data-form data-callout"><header><p class="eyebrow">QUICK ENTRY</p><h2>Fill a missing value</h2></header><p>Open a missing-data link anywhere in the tracker to arrive with the item and next missing level filled in, or start a new observation here.</p><button class="button primary" type="button" data-add-record>+ Record upgrade data</button><div class="data-method"><b>HOW NORMALIZATION WORKS</b><p>If the game shows 900 food with a 10% reduction, we retain 900 as the observation and estimate the underlying cost as 1,000. Both values and the bonus context are exported for later pattern analysis.</p></div></div>
+    <section class="data-records"><header><div><p class="eyebrow">LOCAL DATABASE</p><h2>Upgrade observations</h2></div><div><button class="button secondary" id="exportData">Export JSON</button><label class="button secondary import-button">Import JSON<input id="importData" type="file" accept="application/json"></label></div></header>${state.upgradeRecords.length ? `<div class="record-table">${state.upgradeRecords.map((record,index)=>`<article><div><span>${record.category} · ${record.observation ? 'NORMALIZED' : 'BASE VALUE'}</span><b>${record.item} → ${record.level}</b><small>${resourceNames.filter(name=>record.resources?.[name]).map(name=>`${formatNumber(record.resources[name])} ${name}`).join(' · ') || 'No resources'} · ${formatDuration(record.minutes)}${record.observation?.resourceReduction ? ` · ${record.observation.resourceReduction}% resource reduction` : ''}${record.observation?.timeReduction ? ` · ${record.observation.timeReduction}% time reduction` : ''}${record.source ? ` · ${record.source}` : ''}</small></div><div class="record-actions"><button data-edit-record="${index}" aria-label="Edit record">✎</button><button data-delete-record="${index}" aria-label="Delete record">×</button></div></article>`).join('')}</div>` : '<div class="empty-records">No observations yet. Click any missing-data prompt in the trackers, or start one here.</div>'}</section></section>
     <section class="objective-calculator"><div><p class="eyebrow">ANY UPGRADE</p><h2>Target calculator</h2><p>Use exact database identifiers to plan research or any upgrade not yet represented by a tracker card.</p></div><form id="objectiveForm"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star</option><option value="survivor-star">Survivor star</option></select></label><label>ITEM<input name="item" required placeholder="Exact item name or ID"></label><label>CURRENT<input name="current" type="number" min="0" required value="0"></label><label>TARGET<input name="target" type="number" min="1" required value="1"></label><button class="button primary" type="submit">Calculate</button></form><div id="objectiveResult" class="objective-result">Choose an objective to calculate its verified requirements.</div></section>`;
+}
+
+function updateNormalizationPreview(form) {
+  const values = Object.fromEntries(new FormData(form));
+  const resourceReduction = Number(values.resourceReduction) || 0;
+  const timeReduction = Number(values.timeReduction) || 0;
+  const resources = resourceNames.filter(name => Number(values[name])).map(name => `${formatNumber(baseFromObserved(values[name], resourceReduction))} ${name}`);
+  $('#normalizationPreview').innerHTML = `<span>ESTIMATED BASE VALUES</span><b>${resources.join(' · ') || 'No resources'} · ${formatDuration(baseFromObserved(values.minutes, timeReduction))}</b><small>${resourceReduction || timeReduction ? 'Calculated from the reductions entered above. The displayed values are also retained.' : 'No reductions entered; shown and base values are the same.'}</small>`;
+}
+
+function openUpgradeDialog(trigger = {}) {
+  const form = $('#quickUpgradeForm');
+  form.reset();
+  form.elements.editIndex.value = trigger.editIndex ?? '';
+  form.elements.category.value = trigger.category || 'building';
+  form.elements.item.value = trigger.item || '';
+  form.elements.level.value = trigger.level || 1;
+  $('#upgradeDialogTitle').textContent = trigger.editIndex === undefined ? 'Record an upgrade' : 'Edit upgrade observation';
+  updateNormalizationPreview(form);
+  $('#upgradeDialog').showModal();
+  setTimeout(() => (form.elements.item.value ? form.elements.food : form.elements.item).focus(), 50);
+}
+
+function editUpgradeRecord(index) {
+  const record = state.upgradeRecords[index];
+  if (!record) return;
+  const observed = record.observation?.resources || record.resources || emptyResources();
+  openUpgradeDialog({ category: record.category, item: record.item, level: record.level, editIndex: index });
+  const form = $('#quickUpgradeForm');
+  resourceNames.forEach(name => { form.elements[name].value = Number(observed[name]) || 0; });
+  form.elements.minutes.value = Number(record.observation?.minutes ?? record.minutes) || 0;
+  form.elements.resourceReduction.value = Number(record.observation?.resourceReduction) || 0;
+  form.elements.timeReduction.value = Number(record.observation?.timeReduction) || 0;
+  form.elements.modifierNote.value = record.observation?.modifierNote || '';
+  form.elements.source.value = record.source || '';
+  updateNormalizationPreview(form);
 }
 
 const pages = {
@@ -291,6 +339,9 @@ const pages = {
 };
 
 function bindPageControls() {
+  document.querySelectorAll('[data-add-record]').forEach(button => button.addEventListener('click', () => openUpgradeDialog({
+    category: button.dataset.category, item: button.dataset.item, level: button.dataset.level
+  })));
   document.querySelectorAll('.level-stepper').forEach(control => {
     const input = control.querySelector('input');
     const update = value => {
@@ -345,18 +396,12 @@ function bindPageControls() {
   document.querySelectorAll('[data-remove-survivor]').forEach(button => button.addEventListener('click', () => {
     state.survivors = state.survivors.filter(item => item.id !== button.dataset.removeSurvivor); save('Survivor removed'); renderRoute();
   }));
-  $('#upgradeForm')?.addEventListener('submit', event => {
-    event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget));
-    const record = { category: values.category, item: values.item.trim(), level: Number(values.level), minutes: Number(values.minutes) || 0, source: values.source.trim(), resources: Object.fromEntries(resourceNames.map(name => [name, Number(values[name]) || 0])) };
-    const existing = state.upgradeRecords.findIndex(item => item.category === record.category && item.item === record.item && item.level === record.level);
-    if (existing >= 0) state.upgradeRecords[existing] = record; else state.upgradeRecords.push(record);
-    save(existing >= 0 ? 'Record updated' : 'Record added'); renderRoute();
-  });
+  document.querySelectorAll('[data-edit-record]').forEach(button => button.addEventListener('click', () => editUpgradeRecord(Number(button.dataset.editRecord))));
   document.querySelectorAll('[data-delete-record]').forEach(button => button.addEventListener('click', () => {
     state.upgradeRecords.splice(Number(button.dataset.deleteRecord), 1); save('Record deleted'); renderRoute();
   }));
   $('#exportData')?.addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), records: state.upgradeRecords }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ schemaVersion: 2, updatedAt: new Date().toISOString(), records: state.upgradeRecords }, null, 2)], { type: 'application/json' });
     const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'zroute-upgrade-costs.json' }); link.click(); URL.revokeObjectURL(link.href);
   });
   $('#importData')?.addEventListener('change', async event => {
@@ -385,6 +430,31 @@ $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle(
 $('#profileButton').addEventListener('click', () => { $('#nameInput').value = state.profile.name; $('#profileDialog').showModal(); setTimeout(()=>$('#nameInput').focus(),50); });
 document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $('#profileDialog').close()));
 document.querySelectorAll('[data-close-survivor]').forEach(button => button.addEventListener('click', () => $('#survivorDialog').close()));
+document.querySelectorAll('[data-close-upgrade]').forEach(button => button.addEventListener('click', () => $('#upgradeDialog').close()));
+$('#quickUpgradeForm').addEventListener('input', event => {
+  if (event.target.matches('input')) updateNormalizationPreview(event.currentTarget);
+});
+$('#quickUpgradeForm').addEventListener('submit', event => {
+  event.preventDefault();
+  const values = Object.fromEntries(new FormData(event.currentTarget));
+  const resourceReduction = Number(values.resourceReduction) || 0;
+  const timeReduction = Number(values.timeReduction) || 0;
+  const observedResources = Object.fromEntries(resourceNames.map(name => [name, Number(values[name]) || 0]));
+  const record = {
+    category: values.category,
+    item: values.item.trim(),
+    level: Number(values.level),
+    resources: Object.fromEntries(resourceNames.map(name => [name, baseFromObserved(values[name], resourceReduction)])),
+    minutes: baseFromObserved(values.minutes, timeReduction),
+    source: values.source.trim(),
+    observation: { resources: observedResources, minutes: Number(values.minutes) || 0, resourceReduction, timeReduction, modifierNote: values.modifierNote.trim() }
+  };
+  const editIndex = values.editIndex === '' ? -1 : Number(values.editIndex);
+  const duplicateIndex = state.upgradeRecords.findIndex((item, index) => index !== editIndex && item.category === record.category && item.item === record.item && item.level === record.level);
+  const targetIndex = editIndex >= 0 ? editIndex : duplicateIndex;
+  if (targetIndex >= 0) state.upgradeRecords[targetIndex] = record; else state.upgradeRecords.push(record);
+  $('#upgradeDialog').close(); save(targetIndex >= 0 ? 'Observation updated' : 'Observation added'); renderRoute();
+});
 $('#survivorForm').addEventListener('submit', event => {
   event.preventDefault(); const name = $('#survivorName').value.trim(); if (!name) return;
   state.survivors.push({ id: `survivor-${Date.now()}`, name, rarity: $('#survivorRarity').value, benefit: $('#survivorBenefit').value.trim(), building: '', starSteps: 0 });
