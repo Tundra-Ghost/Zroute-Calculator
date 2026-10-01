@@ -55,9 +55,9 @@ const researchTrees = [
 ].map(name => ({ name, id: name.toLowerCase().replace(/\s+/g, '-') }));
 
 const allianceBranches = {
-  Growth: ['Alliance Member Limit', 'Alliance Help', 'Construction Support', 'Research Support'],
-  Territory: ['Territory Expansion', 'Resource Protection', 'Alliance Gathering', 'Rally Capacity'],
-  Combat: ['Rally Attack', 'Rally Defense', 'March Speed', 'Wounded Capacity']
+  Develop: ['Alliance Member Limit', 'Alliance Help', 'Construction Support', 'Research Support'],
+  War: ['Rally Attack', 'Rally Defense', 'March Speed', 'Wounded Capacity'],
+  Comprehensive: ['Territory Expansion', 'Resource Protection', 'Alliance Gathering', 'Rally Capacity']
 };
 
 const hero = (name, rarity, heroClass, type, promoted = false) => ({
@@ -92,9 +92,11 @@ const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
 const survivorRarities = ['Other', 'SSR', 'Mythic'];
 const resourceNames = ['food', 'metal', 'oil', 'shards', 'tokens'];
 const emptyResources = () => Object.fromEntries(resourceNames.map(name => [name, 0]));
+const powerFields = ['heroLevel', 'heroSkill', 'heroAttributes', 'heroStars', 'gear', 'hallOfLegends', 'exclusiveWeapons', 'soldier', 'building', 'survivor', 'tech', 'fighterLevel', 'fighterComponent', 'wingman'];
+const emptyPower = () => Object.fromEntries(powerFields.map(name => [name, 0]));
 
 const defaults = {
-  profile: { name: '' },
+  profile: { name: '', server: 52, alliance: 'ExpeditionCorps', allianceTag: 'ExC', power: emptyPower() },
   buildings: Object.fromEntries(buildings.map(({ name }) => [name, 1])),
   research: {},
   alliance: Object.fromEntries(Object.values(allianceBranches).flat().map(name => [name, 0])),
@@ -117,7 +119,7 @@ function loadState() {
     const savedOwnedHeroes = Array.isArray(saved.ownedHeroes) ? saved.ownedHeroes : [];
     const ownedHeroes = savedOwnedHeroes.map(value => heroes.find(item => item.id === value)?.id || heroes.find(item => item.name === value)?.id).filter(Boolean);
     return {
-      profile: { ...defaults.profile, ...saved.profile },
+      profile: { ...defaults.profile, ...saved.profile, power: { ...emptyPower(), ...saved.profile?.power } },
       buildings: Object.fromEntries(Object.keys(defaults.buildings).map(name => [name, savedBuildings[name] ?? defaults.buildings[name]])),
       research: { ...defaults.research, ...saved.research },
       alliance: { ...defaults.alliance, ...saved.alliance },
@@ -157,6 +159,14 @@ function heroProgress(hero) {
 }
 function shardsUsed(steps) {
   return Array.from({ length: steps }, (_, index) => starShardCosts[Math.floor(index / 5)]).reduce((sum, cost) => sum + cost, 0);
+}
+
+function sumPower(names) { return names.reduce((sum, name) => sum + (Number(state.profile.power[name]) || 0), 0); }
+function powerTotals() {
+  const hero = sumPower(['heroLevel', 'heroSkill', 'heroAttributes', 'heroStars', 'gear', 'hallOfLegends', 'exclusiveWeapons']);
+  const soldier = sumPower(['soldier']); const building = sumPower(['building', 'survivor']);
+  const tech = sumPower(['tech']); const fighter = sumPower(['fighterLevel', 'fighterComponent', 'wingman']);
+  return { hero, soldier, building, tech, fighter, total: hero + soldier + building + tech + fighter };
 }
 
 function targetKey(category, item) { return `${category}:${item}`; }
@@ -212,21 +222,23 @@ function calculateUpgrade(category, item, current, target) {
   const isStarPlan = category === 'hero-star' || category === 'survivor-star';
   if (isStarPlan) total.resources.shards += shardsUsed(target) - shardsUsed(current);
   const needed = Math.max(0, target - current);
-  return { ...total, found: category === 'hero-star' ? needed : records.length, needed };
+  return { ...total, found: isStarPlan ? needed : records.length, needed };
+}
+function resourceLabel(name, category, item) {
+  if (name !== 'shards') return name.toUpperCase();
+  const rarity = category === 'hero-star' ? heroes.find(hero => hero.id === item)?.rarity : state.survivors.find(person => person.id === item)?.rarity;
+  return `${rarity || ''} SHARDS`.trim();
 }
 function planSummary(category, item, current, target) {
   if (target <= current) return '<small class="plan-ready">TARGET REACHED</small>';
   const plan = calculateUpgrade(category, item, current, target);
-  if (!plan.needed || plan.found !== plan.needed) {
-    const known = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
-    const missingLevel = firstMissingLevel(category, item, current, target);
-    return `<small class="plan-missing">${known ? `${known} · ` : ''}COST DATA ${plan.found}/${plan.needed} LEVELS · <button type="button" class="missing-data-button" data-add-record data-category="${category}" data-item="${item}" data-level="${missingLevel}">FILL LEVEL ${missingLevel}</button></small>`;
-  }
-  const resources = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
-  return `<small class="plan-ready">${resources || 'No resources'} · ◷ ${formatDuration(plan.minutes)}</small>`;
+  const incomplete = !plan.needed || plan.found !== plan.needed;
+  const resources = resourceNames.map(name => `<span><b>${formatNumber(plan.resources[name])}</b> ${resourceLabel(name, category, item)}</span>`).join('');
+  const missingLevel = firstMissingLevel(category, item, current, target);
+  return `<div class="upgrade-analytics ${incomplete ? 'incomplete' : ''}"><strong>YOU NEED</strong>${resources}<span><b>${formatDuration(plan.minutes)}</b> TIME</span>${incomplete ? `<small>⚠ Unknown values default to 0 until all data for this field is complete (${plan.found}/${plan.needed}). <button type="button" class="missing-data-button" data-add-record data-category="${category}" data-item="${item}" data-level="${missingLevel}">Fill level ${missingLevel}</button></small>` : '<small>All level data for this target is available.</small>'}</div>`;
 }
 function targetControl(category, item, current, max = 30, label = 'TARGET') {
-  const target = Math.max(current, Math.min(max, targetFor(category, item, current)));
+  const target = Math.max(current, Math.min(max, targetFor(category, item, max)));
   return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${item}" type="number" min="${current}" max="${max}" value="${target}"></label>${planSummary(category, item, current, target)}</div>`;
 }
 function starPicker(id, steps, ownerType = 'hero') {
@@ -236,9 +248,27 @@ function starPicker(id, steps, ownerType = 'hero') {
 function overviewPage() {
   pageHeader('COMMAND CENTER', 'Overview');
   const completedBuildings = Object.values(state.buildings).filter(level => level > 1).length;
-  return `<section class="hero-banner"><div><span class="chapter">YOUR SURVIVOR RECORD</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record what you have. We will leave power calculations for verified game data.</p></div><div class="level-control summary"><span>HQ</span><strong>${state.buildings.HQ}</strong><small>Change this from Construction</small></div></section>
+  const power = powerTotals();
+  return `<section class="hero-banner"><div><span class="chapter">SERVER 52 · EXPEDITIONCORPS [EXC]</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record progress, power, and exact requirements from one local profile.</p></div><div class="level-control summary"><span>TOTAL POWER</span><strong>${formatNumber(power.total)}</strong><small>Unknown values currently count as 0</small></div></section>
+  <section class="power-summary"><header><div><p class="eyebrow">COMMANDER ANALYTICS</p><h2>Power level</h2></div><button class="button secondary" data-edit-profile>Edit power data</button></header><div>${Object.entries({Hero:power.hero,Soldier:power.soldier,Building:power.building,Tech:power.tech,Fighter:power.fighter}).map(([name,value])=>`<article><span>${name.toUpperCase()} POWER</span><strong>${formatNumber(value)}</strong></article>`).join('')}</div><p>⚠ Unknown power values default to 0 until all data for each field has been completed.</p></section>
   <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH TREES</span><strong>${researchTrees.length}</strong><small>Ready for future tree data</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
   <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a><a class="quick-card" href="#survivors"><span>05</span><h3>Survivors</h3><p>Assign specialists and plan their stars.</p><b>Open survivors →</b></a></section>`;
+}
+
+function filterPage() {
+  pageHeader('DIRECTORY TOOLS', 'Filter');
+  return `<section class="page-intro"><div><p class="eyebrow">FILTER TAB</p><h2>Find tracked items</h2><p>Search and narrow your local directory across buildings, heroes, survivors, research, and alliance research.</p></div></section>
+  <section class="filter-panel"><div class="filter-controls"><label>SEARCH<input id="filterSearch" type="search" placeholder="Search by name"></label><label>CATEGORY<select id="filterCategory"><option value="all">All categories</option><option value="Building">Buildings</option><option value="Hero">Heroes</option><option value="Survivor">Survivors</option><option value="Research">Research</option><option value="Alliance">Alliance research</option></select></label><label>STATUS<select id="filterStatus"><option value="all">Any status</option><option value="owned">Owned / active</option><option value="unowned">Not owned</option></select></label></div><p id="filterCount" class="filter-count"></p><div id="filterResults" class="filter-results"></div></section>`;
+}
+
+function filterItems() {
+  return [
+    ...buildings.map(item => ({ category: 'Building', name: item.name, detail: `Level ${state.buildings[item.name]}`, active: state.buildings[item.name] > 1, href: '#construction' })),
+    ...heroes.map(item => ({ category: 'Hero', name: item.name, detail: `${item.rarity} · ${item.heroClass}`, active: state.ownedHeroes.includes(item.id), href: '#heroes' })),
+    ...state.survivors.map(item => ({ category: 'Survivor', name: item.name, detail: `${item.rarity} · ${item.building || 'Unassigned'}`, active: true, href: '#survivors' })),
+    ...researchTrees.map(item => ({ category: 'Research', name: item.name, detail: 'Research tree', active: false, href: `#research/${item.id}` })),
+    ...Object.entries(allianceBranches).flatMap(([branch, items]) => items.map(name => ({ category: 'Alliance', name, detail: `${branch} · Level ${state.alliance[name] || 0}`, active: (state.alliance[name] || 0) > 0, href: '#alliance' })))
+  ];
 }
 
 function constructionPage() {
@@ -368,10 +398,12 @@ const pages = {
   alliance: () => branchPage('alliance', 'Alliance research', 'Record shared technology levels exactly as they appear for your alliance.', allianceBranches),
   heroes: heroesPage,
   survivors: survivorsPage,
+  filter: filterPage,
   data: dataPage
 };
 
 function bindPageControls() {
+  $('[data-edit-profile]')?.addEventListener('click', openProfileDialog);
   document.querySelectorAll('[data-add-record]').forEach(button => button.addEventListener('click', () => requestUpgradeDialog({
     category: button.dataset.category, item: button.dataset.item, level: button.dataset.level
   })));
@@ -451,6 +483,13 @@ function bindPageControls() {
   });
   const objectiveForm = $('#objectiveForm');
   objectiveForm?.elements.category.addEventListener('change', event => populateUpgradeItemSelect(objectiveForm.elements.item, event.target.value));
+  const updateFilters = () => {
+    const query = ($('#filterSearch')?.value || '').trim().toLowerCase(); const category = $('#filterCategory')?.value || 'all'; const status = $('#filterStatus')?.value || 'all';
+    const matches = filterItems().filter(item => (!query || `${item.name} ${item.detail}`.toLowerCase().includes(query)) && (category === 'all' || item.category === category) && (status === 'all' || item.active === (status === 'owned')));
+    if ($('#filterCount')) $('#filterCount').textContent = `${matches.length} RESULTS`;
+    if ($('#filterResults')) $('#filterResults').innerHTML = matches.length ? matches.map(item => `<a href="${item.href}"><span>${item.category}</span><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.detail)}</small><i>${item.active ? 'ACTIVE' : 'NOT ACTIVE'} →</i></a>`).join('') : '<div class="empty-records">No tracked items match these filters.</div>';
+  };
+  ['#filterSearch','#filterCategory','#filterStatus'].forEach(selector => $(selector)?.addEventListener('input', updateFilters)); updateFilters();
 }
 
 function renderRoute() {
@@ -462,7 +501,8 @@ function renderRoute() {
 }
 
 $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
-$('#profileButton').addEventListener('click', () => { $('#nameInput').value = state.profile.name; $('#profileDialog').showModal(); setTimeout(()=>$('#nameInput').focus(),50); });
+function openProfileDialog() { const form = $('#profileForm'); $('#nameInput').value = state.profile.name; powerFields.forEach(name => { form.elements[name].value = Number(state.profile.power[name]) || 0; }); $('#profileDialog').showModal(); setTimeout(()=>$('#nameInput').focus(),50); }
+$('#profileButton').addEventListener('click', openProfileDialog);
 document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $('#profileDialog').close()));
 document.querySelectorAll('[data-close-survivor]').forEach(button => button.addEventListener('click', () => $('#survivorDialog').close()));
 document.querySelectorAll('[data-close-upgrade]').forEach(button => button.addEventListener('click', () => $('#upgradeDialog').close()));
@@ -508,7 +548,7 @@ $('#survivorForm').addEventListener('submit', event => {
   state.survivors.push({ id: `survivor-${Date.now()}`, name, rarity: $('#survivorRarity').value, benefit: $('#survivorBenefit').value.trim(), building: '', starSteps: 0 });
   event.currentTarget.reset(); $('#survivorDialog').close(); save('Survivor added'); renderRoute();
 });
-$('#profileForm').addEventListener('submit', event => { event.preventDefault(); const name=$('#nameInput').value.trim(); if (!name) return; state.profile.name=name; save('Profile saved'); setProfile(); $('#profileDialog').close(); });
+$('#profileForm').addEventListener('submit', event => { event.preventDefault(); const name=$('#nameInput').value.trim(); if (!name) return; state.profile.name=name; state.profile.power = Object.fromEntries(powerFields.map(field => [field, Math.max(0, Number(event.currentTarget.elements[field].value) || 0)])); save('Profile and power saved'); setProfile(); $('#profileDialog').close(); renderRoute(); });
 $('#resetData').addEventListener('click', () => { if (!confirm('Reset your profile and every saved level?')) return; state=structuredClone(defaults); save('Progress reset'); setProfile(); renderRoute(); });
 window.addEventListener('hashchange', renderRoute);
 setProfile(); renderRoute();
