@@ -19,6 +19,8 @@
       <a class="nav-link" href="#research" data-route="research"><span>⌬</span> Research</a>
       <a class="nav-link" href="#alliance" data-route="alliance"><span>◇</span> Alliance research</a>
       <a class="nav-link" href="#heroes" data-route="heroes"><span>♙</span> Heroes</a>
+      <a class="nav-link" href="#survivors" data-route="survivors"><span>♟</span> Survivors</a>
+      <a class="nav-link" href="#data" data-route="data"><span>▤</span> Upgrade data</a>
     </nav>
     <div class="side-card"><span class="signal"><i></i> LOCAL PROFILE</span><b>Your data, your device</b><p>Levels and preferences are saved only in this browser.</p></div>
     <button class="reset" id="resetData">↻ &nbsp; Reset all progress</button>
@@ -43,6 +45,17 @@
       <p class="dialog-copy">This name stays on this device and can be changed at any time.</p>
       <label class="field">COMMANDER NAME<input id="nameInput" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required></label>
       <div class="dialog-actions"><button class="button secondary" type="button" data-close-dialog>Cancel</button><button class="button primary" id="saveProfile" type="submit">Save profile</button></div>
+    </form>
+  </dialog>
+  <dialog id="survivorDialog">
+    <form id="survivorForm" method="dialog">
+      <button class="dialog-close" type="button" data-close-survivor aria-label="Close">×</button>
+      <p class="eyebrow">SURVIVOR DIRECTORY</p><h2>Add a survivor</h2>
+      <p class="dialog-copy">Add survivors as you find them in game. You can then assign them to a building and track their progression.</p>
+      <label class="field">NAME<input id="survivorName" maxlength="32" required placeholder="Survivor name"></label>
+      <label class="field">RARITY<select id="survivorRarity"><option>Other</option><option>SSR</option><option>Mythic</option></select></label>
+      <label class="field">BENEFIT (OPTIONAL)<input id="survivorBenefit" maxlength="80" placeholder="e.g. Construction speed"></label>
+      <div class="dialog-actions"><button class="button secondary" type="button" data-close-survivor>Cancel</button><button class="button primary" type="submit">Add survivor</button></div>
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
