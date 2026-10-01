@@ -1,6 +1,6 @@
 # Z Route Command Center
 
-A responsive, browser-based progress tracker and planning dashboard for **Z Route: Redemption** players. It provides HQ-level-aware estimates, upgrade tracking, research summaries, hero formation details, and squad analytics.
+A responsive, browser-based progress tracker and planning dashboard for **Z Route: Redemption** players. Create a local commander profile, record building levels, track personal and alliance research, and maintain a hero roster from one fully navigable interface.
 
 ## Run locally
 
@@ -12,4 +12,4 @@ Then visit `http://localhost:4173`. Progress is stored in the browser's `localSt
 
 ## Data note
 
-The linked community wiki is currently incomplete. Values in this first version are clearly presented as planning estimates and sample profile data; the data model is isolated in `app.js` so verified game values can be substituted as community research becomes available.
+The tracker deliberately does not calculate power, costs, times, requirements, or bonuses until those values can be verified. Hero names reference the linked community wiki, while all levels are entered by the user and stored only in their browser.
