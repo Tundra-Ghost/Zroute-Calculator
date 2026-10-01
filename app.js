@@ -1,13 +1,48 @@
 const STORAGE_KEY = 'zroute-command-center-v2';
 
-const buildings = [
-  ['Headquarters', 'The heart of your settlement', '⌂'], ['Research Center', 'Home of personal research', '⌬'],
-  ['Alliance Center', 'Supports alliance activity', '◇'], ['Barracks', 'Trains fighter units', '⚔'],
-  ['Shooting Range', 'Trains ranged units', '◎'], ['Garage', 'Trains vehicle units', '▰'],
-  ['Hospital', 'Treats wounded units', '✚'], ['Wall', 'Protects your settlement', '▥'],
-  ['Warehouse', 'Stores protected resources', '▣'], ['Farm', 'Produces food', '♨'],
-  ['Oil Field', 'Produces oil', '◉'], ['Lumberyard', 'Produces lumber', '⌁']
+const numberedBuildings = (name, count, icon) => Array.from({ length: count }, (_, index) => ({
+  name: `${name} ${index + 1}`, description: name, icon
+}));
+
+// This order and grouping mirrors the supplied in-game construction directory.
+// Numbered entries are separate building slots, so each keeps its own level.
+const constructionGroups = [
+  { name: 'HQ', buildings: [{ name: 'HQ', description: 'Headquarters', icon: '⌂' }] },
+  { name: 'Economy', buildings: [
+    ...numberedBuildings('Farm', 5, '♨'),
+    ...numberedBuildings('Metal Smelting Plant', 5, '◆'),
+    ...numberedBuildings('Trainin Ground', 5, '⚒'),
+    ...numberedBuildings('Oil Extraction Well', 5, '◉'),
+    { name: 'Motel', description: 'Motel', icon: '▤' },
+    { name: 'Alloy Processing Plant', description: 'Alloy Processing Plant', icon: '◇' },
+    { name: 'Gear Metal Factory', description: 'Gear Metal Factory', icon: '⚙' },
+    { name: 'Monument', description: 'Monument', icon: '▲' },
+    { name: 'Decoration Center', description: 'Decoration Center', icon: '✦' },
+    { name: 'Oil Tank', description: 'Oil Tank', icon: '●' },
+    { name: 'Barn', description: 'Barn', icon: '▰' },
+    { name: 'Metal Warehouse', description: 'Metal Warehouse', icon: '▣' }
+  ] },
+  { name: 'Military', buildings: [
+    { name: 'Wingman Lab', description: 'Wingman Lab', icon: '⌬' },
+    { name: 'Scout Drone', description: 'Scout Drone', icon: '⌁' },
+    { name: 'Soldier Training Camp', description: 'Soldier Training Camp', icon: '⚔' },
+    { name: 'Hospital', description: 'Hospital', icon: '✚' },
+    { name: 'Drill Ground', description: 'Drill Ground', icon: '◎' },
+    { name: 'Radar', description: 'Radar', icon: '◉' },
+    { name: 'Alliance Center', description: 'Alliance Center', icon: '◇' },
+    { name: 'Special Ops Squad', description: 'Special Ops Squad', icon: '★' },
+    { name: 'Shop', description: 'Shop', icon: '▥' },
+    { name: 'Arena', description: 'Arena', icon: '⬡' },
+    { name: 'Warrior Training Center', description: 'Warrior Training Center', icon: '⚔' },
+    { name: 'Assault Training Center', description: 'Assault Training Center', icon: '➶' },
+    { name: 'Tactical Training Center', description: 'Tactical Training Center', icon: '⌖' },
+    { name: 'Research Center Alpha', description: 'Research Center Alpha', icon: 'α' },
+    { name: 'Research Center Beta', description: 'Research Center Beta', icon: 'β' },
+    { name: 'Gear Craft Center', description: 'Gear Craft Center', icon: '⚙' }
+  ] }
 ];
+
+const buildings = constructionGroups.flatMap(group => group.buildings);
 
 const researchBranches = {
   Development: ['Construction Speed', 'Research Speed', 'Building Capacity', 'Stamina Recovery'],
@@ -27,7 +62,7 @@ const heroes = ['Maddie', 'Park', 'Rex', 'Zoe', 'Liam', 'Eva', 'Mason', 'Sophia'
 
 const defaults = {
   profile: { name: '' },
-  buildings: Object.fromEntries(buildings.map(([name]) => [name, 1])),
+  buildings: Object.fromEntries(buildings.map(({ name }) => [name, 1])),
   research: Object.fromEntries(Object.values(researchBranches).flat().map(name => [name, 0])),
   alliance: Object.fromEntries(Object.values(allianceBranches).flat().map(name => [name, 0])),
   ownedHeroes: []
@@ -40,9 +75,11 @@ const app = $('#app');
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const savedBuildings = { ...saved.buildings };
+    if (savedBuildings.HQ === undefined && savedBuildings.Headquarters !== undefined) savedBuildings.HQ = savedBuildings.Headquarters;
     return {
       profile: { ...defaults.profile, ...saved.profile },
-      buildings: { ...defaults.buildings, ...saved.buildings },
+      buildings: Object.fromEntries(Object.keys(defaults.buildings).map(name => [name, savedBuildings[name] ?? defaults.buildings[name]])),
       research: { ...defaults.research, ...saved.research },
       alliance: { ...defaults.alliance, ...saved.alliance },
       ownedHeroes: Array.isArray(saved.ownedHeroes) ? saved.ownedHeroes : []
@@ -74,14 +111,14 @@ function overviewPage() {
   pageHeader('COMMAND CENTER', 'Overview');
   const completedBuildings = Object.values(state.buildings).filter(level => level > 1).length;
   const researchLevels = Object.values(state.research).reduce((a, b) => a + b, 0);
-  return `<section class="hero-banner"><div><span class="chapter">YOUR SURVIVOR RECORD</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record what you have. We will leave power calculations for verified game data.</p></div><div class="level-control summary"><span>HEADQUARTERS</span><strong>${state.buildings.Headquarters}</strong><small>Change this from Construction</small></div></section>
+  return `<section class="hero-banner"><div><span class="chapter">YOUR SURVIVOR RECORD</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record what you have. We will leave power calculations for verified game data.</p></div><div class="level-control summary"><span>HQ</span><strong>${state.buildings.HQ}</strong><small>Change this from Construction</small></div></section>
   <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH LEVELS</span><strong>${researchLevels}</strong><small>Across your personal research</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
   <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a></section>`;
 }
 
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
-  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Record the level shown in game. No unlock, cost, time, or power values are estimated.</p></div><div class="completion-ring"><strong>${Object.values(state.buildings).filter(v=>v>1).length}</strong><span>UPDATED</span></div></section><section class="card-grid">${buildings.map(([name, description, icon]) => `<article class="tracker-card"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${name}</h3><p>${description}</p></div>${levelControl('buildings', name, state.buildings[name], 30)}</article>`).join('')}</section><p class="source-note">Building names are organized as a user-editable tracker. Requirements and bonuses will only be added when they can be verified.</p>`;
+  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Record the level shown in game. No unlock, cost, time, or power values are estimated.</p></div><div class="completion-ring"><strong>${Object.values(state.buildings).filter(v=>v>1).length}</strong><span>UPDATED</span></div></section>${constructionGroups.map(group => `<section class="construction-group"><header><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'}</span></header><div class="card-grid">${group.buildings.map(({ name, description, icon }) => `<article class="tracker-card"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${name}</h3><p>${description}</p></div>${levelControl('buildings', name, state.buildings[name], 30)}</article>`).join('')}</div></section>`).join('')}<p class="source-note">Building names and numbered slots follow the supplied construction directory. Requirements and bonuses will only be added when they can be verified.</p>`;
 }
 
 function branchPage(type, title, subtitle, branches) {
