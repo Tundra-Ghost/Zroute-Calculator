@@ -1,4 +1,5 @@
-const STORAGE_KEY = 'zroute-command-center-v2';
+const STORAGE_KEY = 'zroute-command-center-v3';
+const LEGACY_STORAGE_KEY = 'zroute-command-center-v2';
 
 const numberedBuildings = (name, count, icon) => Array.from({ length: count }, (_, index) => ({
   name: `${name} ${index + 1}`, description: name, icon
@@ -88,6 +89,9 @@ const equipmentSlots = ['Rifle', 'Scope', 'Helmet', 'Bullet Proof Vest'];
 const equipmentQualities = ['None', 'R / Green', 'SR / Blue', 'SSR / Purple', 'UR / Gold'];
 const starShardCosts = [5, 10, 20, 60, 100];
 const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
+const survivorRarities = ['Other', 'SSR', 'Mythic'];
+const resourceNames = ['food', 'metal', 'oil', 'shards', 'tokens'];
+const emptyResources = () => Object.fromEntries(resourceNames.map(name => [name, 0]));
 
 const defaults = {
   profile: { name: '' },
@@ -95,7 +99,10 @@ const defaults = {
   research: {},
   alliance: Object.fromEntries(Object.values(allianceBranches).flat().map(name => [name, 0])),
   ownedHeroes: [],
-  heroProgress: {}
+  heroProgress: {},
+  survivors: [],
+  upgradeRecords: [],
+  targets: {}
 };
 
 let state = loadState();
@@ -104,7 +111,7 @@ const app = $('#app');
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY) || '{}');
     const savedBuildings = { ...saved.buildings };
     if (savedBuildings.HQ === undefined && savedBuildings.Headquarters !== undefined) savedBuildings.HQ = savedBuildings.Headquarters;
     const savedOwnedHeroes = Array.isArray(saved.ownedHeroes) ? saved.ownedHeroes : [];
@@ -115,7 +122,10 @@ function loadState() {
       research: { ...defaults.research, ...saved.research },
       alliance: { ...defaults.alliance, ...saved.alliance },
       ownedHeroes: [...new Set(ownedHeroes)],
-      heroProgress: saved.heroProgress && typeof saved.heroProgress === 'object' ? saved.heroProgress : {}
+      heroProgress: saved.heroProgress && typeof saved.heroProgress === 'object' ? saved.heroProgress : {},
+      survivors: Array.isArray(saved.survivors) ? saved.survivors : [],
+      upgradeRecords: Array.isArray(saved.upgradeRecords) ? saved.upgradeRecords : [],
+      targets: saved.targets && typeof saved.targets === 'object' ? saved.targets : {}
     };
   } catch { return structuredClone(defaults); }
 }
@@ -149,17 +159,54 @@ function shardsUsed(steps) {
   return Array.from({ length: steps }, (_, index) => starShardCosts[Math.floor(index / 5)]).reduce((sum, cost) => sum + cost, 0);
 }
 
+function targetKey(category, item) { return `${category}:${item}`; }
+function targetFor(category, item, fallback) { return Number(state.targets[targetKey(category, item)] ?? fallback); }
+function formatNumber(value) { return new Intl.NumberFormat().format(value || 0); }
+function formatDuration(minutes) {
+  if (!minutes) return '0m';
+  const days = Math.floor(minutes / 1440); const hours = Math.floor((minutes % 1440) / 60); const mins = minutes % 60;
+  return [days && `${days}d`, hours && `${hours}h`, mins && `${mins}m`].filter(Boolean).join(' ');
+}
+function calculateUpgrade(category, item, current, target) {
+  const records = state.upgradeRecords.filter(record => record.category === category && record.item === item && record.level > current && record.level <= target);
+  const total = records.reduce((result, record) => {
+    resourceNames.forEach(name => { result.resources[name] += Number(record.resources?.[name]) || 0; });
+    result.minutes += Number(record.minutes) || 0; return result;
+  }, { resources: emptyResources(), minutes: 0 });
+  const isStarPlan = category === 'hero-star' || category === 'survivor-star';
+  if (isStarPlan) total.resources.shards += shardsUsed(target) - shardsUsed(current);
+  const needed = Math.max(0, target - current);
+  return { ...total, found: category === 'hero-star' ? needed : records.length, needed };
+}
+function planSummary(category, item, current, target) {
+  if (target <= current) return '<small class="plan-ready">TARGET REACHED</small>';
+  const plan = calculateUpgrade(category, item, current, target);
+  if (!plan.needed || plan.found !== plan.needed) {
+    const known = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
+    return `<small class="plan-missing">${known ? `${known} · ` : ''}COST DATA ${plan.found}/${plan.needed} LEVELS · <a href="#data">ADD DATA</a></small>`;
+  }
+  const resources = resourceNames.filter(name => plan.resources[name]).map(name => `${formatNumber(plan.resources[name])} ${name}`).join(' · ');
+  return `<small class="plan-ready">${resources || 'No resources'} · ◷ ${formatDuration(plan.minutes)}</small>`;
+}
+function targetControl(category, item, current, max = 30, label = 'TARGET') {
+  const target = Math.max(current, Math.min(max, targetFor(category, item, current)));
+  return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${item}" type="number" min="${current}" max="${max}" value="${target}"></label>${planSummary(category, item, current, target)}</div>`;
+}
+function starPicker(id, steps, ownerType = 'hero') {
+  return `<div class="star-picker" role="group" aria-label="Star power: ${(steps / 5).toFixed(1)} of 5 stars">${Array.from({length: 5}, (_, star) => `<div class="progress-star" aria-label="Star ${star + 1}">${Array.from({length: 5}, (_, section) => { const step = star * 5 + section + 1; return `<button class="star-section ${step <= steps ? 'filled' : ''}" data-star-owner="${ownerType}" data-id="${id}" data-step="${step}" aria-label="Set star power to ${(step / 5).toFixed(1)}"></button>`; }).join('')}</div>`).join('')}</div>`;
+}
+
 function overviewPage() {
   pageHeader('COMMAND CENTER', 'Overview');
   const completedBuildings = Object.values(state.buildings).filter(level => level > 1).length;
   return `<section class="hero-banner"><div><span class="chapter">YOUR SURVIVOR RECORD</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record what you have. We will leave power calculations for verified game data.</p></div><div class="level-control summary"><span>HQ</span><strong>${state.buildings.HQ}</strong><small>Change this from Construction</small></div></section>
   <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH TREES</span><strong>${researchTrees.length}</strong><small>Ready for future tree data</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
-  <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a></section>`;
+  <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a><a class="quick-card" href="#survivors"><span>05</span><h3>Survivors</h3><p>Assign specialists and plan their stars.</p><b>Open survivors →</b></a></section>`;
 }
 
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
-  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Record the level shown in game. No unlock, cost, time, or power values are estimated.</p></div><div class="completion-ring"><strong>${Object.values(state.buildings).filter(v=>v>1).length}</strong><span>UPDATED</span></div></section>${constructionGroups.map(group => `<section class="construction-group"><header><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'}</span></header><div class="card-grid">${group.buildings.map(({ name, description, icon }) => `<article class="tracker-card"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${name}</h3><p>${description}</p></div>${levelControl('buildings', name, state.buildings[name], 30)}</article>`).join('')}</div></section>`).join('')}<p class="source-note">Building names and numbered slots follow the supplied construction directory. Requirements and bonuses will only be added when they can be verified.</p>`;
+  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Set current and target levels. Verified database records are totaled into the resources and build time required.</p></div><div class="completion-ring"><strong>${Object.values(state.buildings).filter(v=>v>1).length}</strong><span>UPDATED</span></div></section>${constructionGroups.map(group => `<section class="construction-group"><header><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'}</span></header><div class="card-grid">${group.buildings.map(({ name, description, icon }) => `<article class="tracker-card"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${name}</h3><p>${description}</p></div>${levelControl('buildings', name, state.buildings[name], 30)}${targetControl('building', name, state.buildings[name], 30)}</article>`).join('')}</div></section>`).join('')}<p class="source-note">Building names and numbered slots follow the supplied construction directory. Costs remain explicitly marked as missing until they are added to the verified upgrade database.</p>`;
 }
 
 function researchPage() {
@@ -194,7 +241,7 @@ function researchPage() {
 
 function branchPage(type, title, subtitle, branches) {
   pageHeader(type === 'research' ? 'TECH LAB' : 'ALLIANCE', title);
-  return `<section class="page-intro"><div><p class="eyebrow">LEVEL TRACKER</p><h2>${title}</h2><p>${subtitle}</p></div></section><div class="branch-layout"><aside class="branch-nav">${Object.keys(branches).map((name,i)=>`<a href="#branch-${type}-${i}"><i></i>${name}</a>`).join('')}</aside><section class="branch-content">${Object.entries(branches).map(([branch, items],i)=>`<article class="branch-panel" id="branch-${type}-${i}"><header><div><p class="eyebrow">${type === 'research' ? 'RESEARCH BRANCH' : 'ALLIANCE BRANCH'}</p><h3>${branch}</h3></div><span>${items.reduce((sum,name)=>sum+state[type][name],0)} LEVELS</span></header>${items.map(name=>`<div class="tech-row"><div><b>${name}</b><p>Enter the level shown in game</p></div>${levelControl(type,name,state[type][name],30)}</div>`).join('')}</article>`).join('')}</section></div>`;
+  return `<section class="page-intro"><div><p class="eyebrow">LEVEL TRACKER</p><h2>${title}</h2><p>${subtitle}</p></div></section><div class="branch-layout"><aside class="branch-nav">${Object.keys(branches).map((name,i)=>`<a href="#branch-${type}-${i}"><i></i>${name}</a>`).join('')}</aside><section class="branch-content">${Object.entries(branches).map(([branch, items],i)=>`<article class="branch-panel" id="branch-${type}-${i}"><header><div><p class="eyebrow">${type === 'research' ? 'RESEARCH BRANCH' : 'ALLIANCE BRANCH'}</p><h3>${branch}</h3></div><span>${items.reduce((sum,name)=>sum+state[type][name],0)} LEVELS</span></header>${items.map(name=>`<div class="tech-row"><div><b>${name}</b><p>Enter the level shown in game</p></div>${levelControl(type,name,state[type][name],30)}${targetControl(type,name,state[type][name],30)}</div>`).join('')}</article>`).join('')}</section></div>`;
 }
 
 function heroesPage() {
@@ -212,8 +259,25 @@ function heroCard(item, index, cap) {
   const stars = (progress.starSteps / 5).toFixed(1).replace('.0', '');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
-    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label><label>STAR POWER <input class="hero-stars" data-id="${item.id}" type="range" min="0" max="25" value="${progress.starSteps}"><b>${stars} ★</b><small>${shardsUsed(progress.starSteps)} shards invested</small></label><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>`<label>${slot}<select class="hero-equipment" data-id="${item.id}" data-slot="${slot}">${equipmentQualities.map(quality=>`<option ${progress.equipment[slot]===quality?'selected':''}>${quality}</option>`).join('')}</select></label>`).join('')}</div><div class="skills-placeholder"><span>4 SKILLS</span><small>Level limits coming with verified skill data</small></div></div>`:''}
+    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small>${targetControl('hero-level', item.id, progress.level, cap)}</label><div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>`<label>${slot}<select class="hero-equipment" data-id="${item.id}" data-slot="${slot}">${equipmentQualities.map(quality=>`<option ${progress.equipment[slot]===quality?'selected':''}>${quality}</option>`).join('')}</select></label>`).join('')}</div><div class="skills-placeholder"><span>4 SKILLS</span><small>Level limits coming with verified skill data</small></div></div>`:''}
   </article>`;
+}
+
+function survivorProgress(item) { return { starSteps: 0, building: '', ...item }; }
+function survivorsPage() {
+  pageHeader('SETTLEMENT CREW', 'Survivors');
+  return `<section class="page-intro survivor-intro"><div><p class="eyebrow">SURVIVOR DIRECTORY</p><h2>Building specialists</h2><p>Track Other, SSR, and Mythic survivors, assign each one to a building, and plan star upgrades in fifth-star increments.</p></div><button class="button primary" id="addSurvivor">+ Add survivor</button></section>
+    <div class="hero-legend"><span><i class="rarity Other">OTHER</i> Other</span><span><i class="rarity SSR">SSR</i> Super rare</span><span><i class="rarity Mythic">MYTHIC</i> Mythic</span><span>Each diamond fills 20% of one star</span></div>
+    ${state.survivors.length ? `<section class="survivor-grid">${state.survivors.map((raw, index) => { const item = survivorProgress(raw); const stars = (item.starSteps / 5).toFixed(1).replace('.0',''); return `<article class="survivor-card"><header><div class="survivor-avatar">${item.name[0].toUpperCase()}</div><div><i class="rarity ${item.rarity}">${item.rarity}</i><h3>${item.name}</h3><small>${item.benefit || 'Benefit not recorded'}</small></div><button class="remove-survivor" data-remove-survivor="${item.id}" aria-label="Remove ${item.name}">×</button></header><label class="assignment">ASSIGNED BUILDING<select class="survivor-building" data-id="${item.id}"><option value="">Unassigned</option>${buildings.map(building => `<option value="${building.name}" ${item.building === building.name ? 'selected' : ''}>${building.name}</option>`).join('')}</select></label><div class="star-field"><span>STAR POWER</span>${starPicker(item.id, item.starSteps, 'survivor')}<b>${stars} ★ · ${shardsUsed(item.starSteps)} shards invested</b>${targetControl('survivor-star', item.id, item.starSteps, 25, 'TARGET STEP')}</div></article>`; }).join('')}</section>` : `<section class="empty-state"><span>♟</span><h2>No survivors yet</h2><p>Add the survivors you discover; no names or benefits are guessed.</p><button class="button primary" id="addSurvivorEmpty">Add your first survivor</button></section>`}
+    <p class="source-note">Shard requirements use the same 5 / 10 / 20 / 60 / 100 schedule as heroes. Add verified survivor-token requirements in Upgrade data; they will be included in target totals.</p>`;
+}
+
+function dataPage() {
+  pageHeader('PLANNING DATABASE', 'Upgrade data');
+  return `<section class="page-intro"><div><p class="eyebrow">COMMUNITY DATA</p><h2>Upgrade cost database</h2><p>Add one verified record for each destination level. Target planners sum every matching level without estimating missing data.</p></div><div class="completion-ring"><strong>${state.upgradeRecords.length}</strong><span>LOCAL RECORDS</span></div></section>
+    <section class="data-layout"><form id="upgradeForm" class="data-form"><header><p class="eyebrow">ADD OR UPDATE</p><h2>Upgrade record</h2></header><div class="data-fields"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star tokens</option><option value="survivor-star">Survivor star tokens</option></select></label><label>ITEM<input name="item" required list="upgradeItems" placeholder="Exact item name or ID"><datalist id="upgradeItems">${[...buildings.map(x=>x.name),...heroes.map(x=>x.id),...state.survivors.map(x=>x.id)].map(x=>`<option value="${x}">`).join('')}</datalist></label><label>DESTINATION LEVEL / STEP<input name="level" type="number" min="1" required></label>${resourceNames.map(name=>`<label>${name.toUpperCase()}<input name="${name}" type="number" min="0" value="0"></label>`).join('')}<label>TIME (MINUTES)<input name="minutes" type="number" min="0" value="0"></label><label class="wide">SOURCE / NOTE<input name="source" maxlength="160" placeholder="Where this value was verified"></label></div><button class="button primary" type="submit">Save verified record</button></form>
+    <section class="data-records"><header><div><p class="eyebrow">LOCAL DATABASE</p><h2>Verified records</h2></div><div><button class="button secondary" id="exportData">Export JSON</button><label class="button secondary import-button">Import JSON<input id="importData" type="file" accept="application/json"></label></div></header>${state.upgradeRecords.length ? `<div class="record-table">${state.upgradeRecords.map((record,index)=>`<article><div><span>${record.category}</span><b>${record.item} → ${record.level}</b><small>${resourceNames.filter(name=>record.resources?.[name]).map(name=>`${formatNumber(record.resources[name])} ${name}`).join(' · ') || 'No resources'} · ${formatDuration(record.minutes)}${record.source ? ` · ${record.source}` : ''}</small></div><button data-delete-record="${index}" aria-label="Delete record">×</button></article>`).join('')}</div>` : '<div class="empty-records">No records yet. The bundled database intentionally starts empty until costs are verified.</div>'}</section></section>
+    <section class="objective-calculator"><div><p class="eyebrow">ANY UPGRADE</p><h2>Target calculator</h2><p>Use exact database identifiers to plan research or any upgrade not yet represented by a tracker card.</p></div><form id="objectiveForm"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star</option><option value="survivor-star">Survivor star</option></select></label><label>ITEM<input name="item" required placeholder="Exact item name or ID"></label><label>CURRENT<input name="current" type="number" min="0" required value="0"></label><label>TARGET<input name="target" type="number" min="1" required value="1"></label><button class="button primary" type="submit">Calculate</button></form><div id="objectiveResult" class="objective-result">Choose an objective to calculate its verified requirements.</div></section>`;
 }
 
 const pages = {
@@ -221,7 +285,9 @@ const pages = {
   construction: constructionPage,
   research: researchPage,
   alliance: () => branchPage('alliance', 'Alliance research', 'Record shared technology levels exactly as they appear for your alliance.', allianceBranches),
-  heroes: heroesPage
+  heroes: heroesPage,
+  survivors: survivorsPage,
+  data: dataPage
 };
 
 function bindPageControls() {
@@ -253,6 +319,58 @@ function bindPageControls() {
     progress.equipment = { ...progress.equipment, [select.dataset.slot]: select.value };
     state.heroProgress[select.dataset.id] = progress; save();
   }));
+  document.querySelectorAll('.star-section').forEach(button => button.addEventListener('click', () => {
+    const steps = Number(button.dataset.step);
+    if (button.dataset.starOwner === 'survivor') {
+      const survivor = state.survivors.find(item => item.id === button.dataset.id);
+      if (survivor) survivor.starSteps = survivor.starSteps === steps ? Math.max(0, steps - 1) : steps;
+    } else {
+      const progress = heroProgress({ id: button.dataset.id });
+      progress.starSteps = progress.starSteps === steps ? Math.max(0, steps - 1) : steps;
+      state.heroProgress[button.dataset.id] = progress;
+    }
+    save('Star power saved'); renderRoute();
+  }));
+  document.querySelectorAll('.target-level').forEach(input => input.addEventListener('change', () => {
+    const value = Math.max(Number(input.min), Math.min(Number(input.max), Number(input.value) || Number(input.min)));
+    state.targets[targetKey(input.dataset.category, input.dataset.item)] = value; save('Target saved'); renderRoute();
+  }));
+  const openSurvivorDialog = () => $('#survivorDialog').showModal();
+  $('#addSurvivor')?.addEventListener('click', openSurvivorDialog);
+  $('#addSurvivorEmpty')?.addEventListener('click', openSurvivorDialog);
+  document.querySelectorAll('.survivor-building').forEach(select => select.addEventListener('change', () => {
+    const survivor = state.survivors.find(item => item.id === select.dataset.id);
+    if (survivor) { survivor.building = select.value; save('Assignment saved'); }
+  }));
+  document.querySelectorAll('[data-remove-survivor]').forEach(button => button.addEventListener('click', () => {
+    state.survivors = state.survivors.filter(item => item.id !== button.dataset.removeSurvivor); save('Survivor removed'); renderRoute();
+  }));
+  $('#upgradeForm')?.addEventListener('submit', event => {
+    event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget));
+    const record = { category: values.category, item: values.item.trim(), level: Number(values.level), minutes: Number(values.minutes) || 0, source: values.source.trim(), resources: Object.fromEntries(resourceNames.map(name => [name, Number(values[name]) || 0])) };
+    const existing = state.upgradeRecords.findIndex(item => item.category === record.category && item.item === record.item && item.level === record.level);
+    if (existing >= 0) state.upgradeRecords[existing] = record; else state.upgradeRecords.push(record);
+    save(existing >= 0 ? 'Record updated' : 'Record added'); renderRoute();
+  });
+  document.querySelectorAll('[data-delete-record]').forEach(button => button.addEventListener('click', () => {
+    state.upgradeRecords.splice(Number(button.dataset.deleteRecord), 1); save('Record deleted'); renderRoute();
+  }));
+  $('#exportData')?.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify({ schemaVersion: 1, updatedAt: new Date().toISOString(), records: state.upgradeRecords }, null, 2)], { type: 'application/json' });
+    const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'zroute-upgrade-costs.json' }); link.click(); URL.revokeObjectURL(link.href);
+  });
+  $('#importData')?.addEventListener('change', async event => {
+    try {
+      const data = JSON.parse(await event.target.files[0].text());
+      if (!Array.isArray(data.records)) throw new Error('Missing records array');
+      state.upgradeRecords = data.records; save('Upgrade database imported'); renderRoute();
+    } catch (error) { save(`Import failed: ${error.message}`); }
+  });
+  $('#objectiveForm')?.addEventListener('submit', event => {
+    event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget));
+    const current = Number(values.current); const target = Number(values.target);
+    $('#objectiveResult').innerHTML = target <= current ? '<b>Target already reached.</b>' : `<b>${values.item}: ${current} → ${target}</b>${planSummary(values.category, values.item.trim(), current, target)}`;
+  });
 }
 
 function renderRoute() {
@@ -266,6 +384,12 @@ function renderRoute() {
 $('#menuButton').addEventListener('click', () => $('#sidebar').classList.toggle('open'));
 $('#profileButton').addEventListener('click', () => { $('#nameInput').value = state.profile.name; $('#profileDialog').showModal(); setTimeout(()=>$('#nameInput').focus(),50); });
 document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $('#profileDialog').close()));
+document.querySelectorAll('[data-close-survivor]').forEach(button => button.addEventListener('click', () => $('#survivorDialog').close()));
+$('#survivorForm').addEventListener('submit', event => {
+  event.preventDefault(); const name = $('#survivorName').value.trim(); if (!name) return;
+  state.survivors.push({ id: `survivor-${Date.now()}`, name, rarity: $('#survivorRarity').value, benefit: $('#survivorBenefit').value.trim(), building: '', starSteps: 0 });
+  event.currentTarget.reset(); $('#survivorDialog').close(); save('Survivor added'); renderRoute();
+});
 $('#profileForm').addEventListener('submit', event => { event.preventDefault(); const name=$('#nameInput').value.trim(); if (!name) return; state.profile.name=name; save('Profile saved'); setProfile(); $('#profileDialog').close(); });
 $('#resetData').addEventListener('click', () => { if (!confirm('Reset your profile and every saved level?')) return; state=structuredClone(defaults); save('Progress reset'); setProfile(); renderRoute(); });
 window.addEventListener('hashchange', renderRoute);
