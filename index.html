@@ -20,6 +20,7 @@
       <a class="nav-link" href="#alliance" data-route="alliance"><span>◇</span> Alliance research</a>
       <a class="nav-link" href="#heroes" data-route="heroes"><span>♙</span> Heroes</a>
       <a class="nav-link" href="#survivors" data-route="survivors"><span>♟</span> Survivors</a>
+      <a class="nav-link" href="#filter" data-route="filter"><span>≡</span> Filter</a>
       <a class="nav-link" href="#data" data-route="data"><span>▤</span> Upgrade data</a>
     </nav>
     <div class="side-card"><span class="signal"><i></i> LOCAL PROFILE</span><b>Your data, your device</b><p>Levels and preferences are saved only in this browser.</p></div>
@@ -38,12 +39,22 @@
     <footer><span>Z ROUTE COMMAND CENTER · COMMUNITY TOOL</span><span>Data saves locally · Not affiliated with the game publisher</span></footer>
   </main>
 
-  <dialog id="profileDialog">
+  <dialog id="profileDialog" class="profile-dialog">
     <form id="profileForm" method="dialog">
       <button class="dialog-close" type="button" data-close-dialog aria-label="Close">×</button>
-      <p class="eyebrow">LOCAL PROFILE</p><h2>What should we call you?</h2>
-      <p class="dialog-copy">This name stays on this device and can be changed at any time.</p>
+      <p class="eyebrow">LOCAL PROFILE</p><h2>Commander profile</h2>
+      <p class="dialog-copy">Your name and power entries stay on this device. Server and alliance are fixed for now.</p>
       <label class="field">COMMANDER NAME<input id="nameInput" maxlength="24" autocomplete="nickname" placeholder="Enter your name" required></label>
+      <div class="fixed-profile"><span>SERVER <b>52</b></span><span>ALLIANCE <b>ExpeditionCorps [ExC]</b></span></div>
+      <p class="power-heading">POWER BREAKDOWN <small>Enter known values; unknown values remain 0.</small></p>
+      <div class="power-fields">
+        <fieldset><legend>HERO POWER</legend><label>Hero level<input name="heroLevel" type="number" min="0" value="0"></label><label>Hero skill<input name="heroSkill" type="number" min="0" value="0"></label><label>Decoration &amp; building attributes<input name="heroAttributes" type="number" min="0" value="0"></label><label>Hero star level<input name="heroStars" type="number" min="0" value="0"></label><label>Gear<input name="gear" type="number" min="0" value="0"></label><label>Hall of Legends<input name="hallOfLegends" type="number" min="0" value="0"></label><label>Exclusive weapons<input name="exclusiveWeapons" type="number" min="0" value="0"></label></fieldset>
+        <fieldset><legend>SOLDIER POWER</legend><label>Soldier<input name="soldier" type="number" min="0" value="0"></label></fieldset>
+        <fieldset><legend>BUILDING POWER</legend><label>Building<input name="building" type="number" min="0" value="0"></label><label>Survivor<input name="survivor" type="number" min="0" value="0"></label></fieldset>
+        <fieldset><legend>TECH POWER</legend><label>Tech<input name="tech" type="number" min="0" value="0"></label></fieldset>
+        <fieldset><legend>FIGHTER POWER</legend><label>Fighter level<input name="fighterLevel" type="number" min="0" value="0"></label><label>Fighter component<input name="fighterComponent" type="number" min="0" value="0"></label><label>Wingman<input name="wingman" type="number" min="0" value="0"></label></fieldset>
+      </div>
+      <p class="unknown-disclaimer">Incomplete power data is deliberately calculated as 0 until verified values are entered.</p>
       <div class="dialog-actions"><button class="button secondary" type="button" data-close-dialog>Cancel</button><button class="button primary" id="saveProfile" type="submit">Save profile</button></div>
     </form>
   </dialog>
