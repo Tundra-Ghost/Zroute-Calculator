@@ -224,6 +224,38 @@ function calculateUpgrade(category, item, current, target) {
   const needed = Math.max(0, target - current);
   return { ...total, found: isStarPlan ? needed : records.length, needed };
 }
+function grandUpgradePlan() {
+  const objectives = [
+    ...buildings.map(({ name }) => ({ category: 'building', item: name, current: Number(state.buildings[name]) || 0, target: Math.max(Number(state.buildings[name]) || 0, targetFor('building', name, 30)) })),
+    ...heroes.flatMap(item => {
+      const owned = state.ownedHeroes.includes(item.id);
+      const progress = heroProgress(item);
+      const currentLevel = owned ? Number(progress.level) || 1 : 0;
+      const currentStars = owned ? Number(progress.starSteps) || 0 : 0;
+      return [
+        { category: 'hero-level', item: item.id, current: currentLevel, target: Math.max(currentLevel, targetFor('hero-level', item.id, heroCap())) },
+        { category: 'hero-star', item: item.id, current: currentStars, target: Math.max(currentStars, targetFor('hero-star', item.id, 25)) }
+      ];
+    }),
+    ...state.survivors.map(raw => {
+      const item = survivorProgress(raw);
+      return { category: 'survivor-star', item: item.id, current: Number(item.starSteps) || 0, target: Math.max(Number(item.starSteps) || 0, targetFor('survivor-star', item.id, 25)) };
+    })
+  ];
+  return objectives.reduce((grand, objective) => {
+    const plan = calculateUpgrade(objective.category, objective.item, objective.current, objective.target);
+    resourceNames.forEach(name => { grand.resources[name] += plan.resources[name]; });
+    grand.minutes += plan.minutes;
+    grand.found += plan.found;
+    grand.needed += plan.needed;
+    return grand;
+  }, { resources: emptyResources(), minutes: 0, found: 0, needed: 0 });
+}
+function grandPlanMarkup() {
+  const plan = grandUpgradePlan();
+  const incomplete = plan.found !== plan.needed;
+  return `<section class="grand-plan ${incomplete ? 'incomplete' : ''}"><header><div><p class="eyebrow">ALL PLANNED UPGRADES</p><h2>Grand total requirements</h2></div><a class="button secondary" href="#data">Manage cost data</a></header><div class="grand-plan-values">${resourceNames.map(name => `<article><span>${name.toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('')}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.minutes)}</strong></article></div><p>${incomplete ? `⚠ Known costs are shown. ${formatNumber(plan.needed - plan.found)} of ${formatNumber(plan.needed)} planned upgrade steps still need cost data.` : 'All planned upgrade steps have verified cost data.'} Unowned heroes and level 0 buildings are calculated from level 0, so unlocking them is included.</p></section>`;
+}
 function resourceLabel(name, category, item) {
   if (name !== 'shards') return name.toUpperCase();
   const rarity = category === 'hero-star' ? heroes.find(hero => hero.id === item)?.rarity : state.survivors.find(person => person.id === item)?.rarity;
@@ -250,6 +282,7 @@ function overviewPage() {
   const completedBuildings = Object.values(state.buildings).filter(level => level > 1).length;
   const power = powerTotals();
   return `<section class="hero-banner"><div><span class="chapter">SERVER 52 · EXPEDITIONCORPS [EXC]</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record progress, power, and exact requirements from one local profile.</p></div><div class="level-control summary"><span>TOTAL POWER</span><strong>${formatNumber(power.total)}</strong><small>Unknown values currently count as 0</small></div></section>
+  ${grandPlanMarkup()}
   <section class="power-summary"><header><div><p class="eyebrow">COMMANDER ANALYTICS</p><h2>Power level</h2></div><button class="button secondary" data-edit-profile>Edit power data</button></header><div>${Object.entries({Hero:power.hero,Soldier:power.soldier,Building:power.building,Tech:power.tech,Fighter:power.fighter}).map(([name,value])=>`<article><span>${name.toUpperCase()} POWER</span><strong>${formatNumber(value)}</strong></article>`).join('')}</div><p>⚠ Unknown power values default to 0 until all data for each field has been completed.</p></section>
   <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH TREES</span><strong>${researchTrees.length}</strong><small>Ready for future tree data</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
   <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a><a class="quick-card" href="#survivors"><span>05</span><h3>Survivors</h3><p>Assign specialists and plan their stars.</p><b>Open survivors →</b></a></section>`;
