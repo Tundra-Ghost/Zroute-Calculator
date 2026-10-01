@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090d0d">
+  <title>Z Route Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="Z Route home"><span class="brand-mark">Z</span><span><b>ROUTE</b><small>COMMAND CENTER</small></span></a>
+    <nav aria-label="Main navigation">
+      <a class="nav-link active" href="#overview"><span>▦</span> Overview</a>
+      <a class="nav-link" href="#upgrades"><span>⌁</span> Upgrades <em>3</em></a>
+      <a class="nav-link" href="#research"><span>⌬</span> Research</a>
+      <a class="nav-link" href="#heroes"><span>♙</span> Heroes</a>
+      <a class="nav-link" href="#analytics"><span>↗</span> Analytics</a>
+    </nav>
+    <div class="side-card">
+      <span class="signal"><i></i> LIVE DATABASE</span>
+      <b>Community data</b>
+      <p>Game values are being mapped. Your progress stays saved on this device.</p>
+    </div>
+    <button class="reset" id="resetData">↻ &nbsp; Reset progress</button>
+  </aside>
+
+  <main>
+    <header>
+      <button class="menu" id="menuButton" aria-label="Toggle menu">☰</button>
+      <div><p class="eyebrow">SURVIVOR PROFILE</p><h1>Welcome back, Commander</h1></div>
+      <div class="profile"><span><b id="profileName">RAVEN-07</b><small>SERVER 184</small></span><div class="avatar">R</div></div>
+    </header>
+
+    <section id="overview" class="hero-banner">
+      <div>
+        <span class="chapter">CHAPTER 12 · DEADLANDS</span>
+        <h2>Your road to<br><strong>redemption</strong></h2>
+        <p>Track your squad, plan every resource, and stay one step ahead of the horde.</p>
+      </div>
+      <div class="level-control">
+        <label for="hqLevel"><span>HQ LEVEL</span><output id="hqOutput">18</output></label>
+        <input id="hqLevel" type="range" min="1" max="30" value="18">
+        <div class="range-labels"><span>01</span><span>30</span></div>
+        <small>Analytics adapt to your current HQ level</small>
+      </div>
+    </section>
+
+    <section class="stats-grid" aria-label="Progress overview">
+      <article class="stat-card"><div class="stat-icon orange">⌁</div><div><span>COMBAT POWER</span><strong id="power">2.47M</strong><small class="positive">▲ 12.4% this week</small></div></article>
+      <article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH</span><strong id="researchPercent">67%</strong><small><i class="progress"><i id="researchBar"></i></i><b id="researchCount">8 / 12</b></small></div></article>
+      <article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HERO POWER</span><strong id="heroPower">884K</strong><small class="positive">▲ Squad synergy 82%</small></div></article>
+      <article class="stat-card"><div class="stat-icon blue">◫</div><div><span>NEXT MILESTONE</span><strong id="days">4 DAYS</strong><small>Estimated to HQ <b id="nextHq">19</b></small></div></article>
+    </section>
+
+    <section id="upgrades" class="content-grid">
+      <article class="panel priority-panel">
+        <div class="panel-head"><div><p class="eyebrow">SMART PLANNER</p><h3>Upgrade priorities</h3></div><button class="link-button">View all →</button></div>
+        <p class="muted">Recommended next steps based on your HQ level and current progress.</p>
+        <div id="upgradeList" class="upgrade-list"></div>
+      </article>
+
+      <article id="analytics" class="panel readiness-panel">
+        <div class="panel-head"><div><p class="eyebrow">POWER ANALYSIS</p><h3>Squad readiness</h3></div><span class="grade">A</span></div>
+        <div class="radar-wrap">
+          <svg viewBox="0 0 240 220" role="img" aria-label="Squad readiness radar chart">
+            <g class="grid-lines"><polygon points="120,20 215,89 179,200 61,200 25,89"/><polygon points="120,50 186,98 161,175 79,175 54,98"/><polygon points="120,81 157,108 143,151 97,151 83,108"/><line x1="120" y1="20" x2="120" y2="132"/><line x1="215" y1="89" x2="120" y2="132"/><line x1="179" y1="200" x2="120" y2="132"/><line x1="61" y1="200" x2="120" y2="132"/><line x1="25" y1="89" x2="120" y2="132"/></g>
+            <polygon class="data-shape" points="120,34 196,98 165,180 76,180 48,99"/>
+            <g class="dots"><circle cx="120" cy="34" r="4"/><circle cx="196" cy="98" r="4"/><circle cx="165" cy="180" r="4"/><circle cx="76" cy="180" r="4"/><circle cx="48" cy="99" r="4"/></g>
+            <g class="chart-labels"><text x="120" y="12">OFFENSE</text><text x="218" y="90">DEFENSE</text><text x="184" y="215">TECH</text><text x="38" y="215">HEROES</text><text x="0" y="90">GROWTH</text></g>
+          </svg>
+        </div>
+        <div class="insight"><span>✦</span><p><b>Strong formation</b>Your offense is ahead of 71% of players at HQ <span id="insightLevel">18</span>.</p></div>
+      </article>
+    </section>
+
+    <section class="content-grid lower-grid">
+      <article id="research" class="panel">
+        <div class="panel-head"><div><p class="eyebrow">TECH LAB</p><h3>Research progress</h3></div><span class="tag">8 ACTIVE</span></div>
+        <div id="researchList" class="research-list"></div>
+      </article>
+      <article id="heroes" class="panel">
+        <div class="panel-head"><div><p class="eyebrow">FORMATION</p><h3>Top heroes</h3></div><button class="link-button">Manage →</button></div>
+        <div id="heroList" class="hero-list"></div>
+      </article>
+    </section>
+    <footer><span>Z ROUTE COMMAND CENTER · COMMUNITY TOOL</span><span>Data saves locally · Not affiliated with the game publisher</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
