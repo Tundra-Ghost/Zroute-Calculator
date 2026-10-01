@@ -171,6 +171,32 @@ function baseFromObserved(value, reduction) {
   const divisor = 1 - Math.min(99.99, Math.max(0, Number(reduction) || 0)) / 100;
   return Math.round((Number(value) || 0) / divisor);
 }
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character]);
+}
+function upgradeItems(category) {
+  let items = [];
+  if (category === 'building') items = buildings.map(item => ({ value: item.name, label: item.name }));
+  if (category === 'research') items = researchTrees.map(item => ({ value: item.name, label: item.name }));
+  if (category === 'alliance') items = Object.entries(allianceBranches).flatMap(([branch, branchItems]) => branchItems.map(item => ({ value: item, label: `${branch} · ${item}` })));
+  if (category === 'hero-level' || category === 'hero-star') items = heroes.map(item => ({ value: item.id, label: `${item.name} · ${item.rarity} ${item.heroClass}` }));
+  if (category === 'survivor-star') items = state.survivors.map(item => ({ value: item.id, label: `${item.name} · ${item.rarity}` }));
+  const existingItems = state.upgradeRecords
+    .filter(record => record.category === category && !items.some(item => item.value === record.item))
+    .map(record => ({ value: record.item, label: `${record.item} · Saved observation` }));
+  return [...items, ...existingItems.filter((item, index) => existingItems.findIndex(candidate => candidate.value === item.value) === index)];
+}
+function upgradeItemOptions(category, selected = '') {
+  const items = upgradeItems(category);
+  const knownSelection = items.some(item => item.value === selected);
+  const options = items.map(item => `<option value="${escapeHtml(item.value)}" ${item.value === selected ? 'selected' : ''}>${escapeHtml(item.label)}</option>`);
+  if (selected && !knownSelection) options.unshift(`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} · Imported record</option>`);
+  if (!items.length && !selected) return '<option value="" selected disabled>No tracked items available</option>';
+  return options.join('');
+}
+function populateUpgradeItemSelect(select, category, selected = '') {
+  select.innerHTML = upgradeItemOptions(category, selected);
+}
 function firstMissingLevel(category, item, current, target) {
   for (let level = current + 1; level <= target; level += 1) {
     if (!state.upgradeRecords.some(record => record.category === category && record.item === item && record.level === level)) return level;
@@ -289,7 +315,7 @@ function dataPage() {
   return `<section class="page-intro"><div><p class="eyebrow">COMMUNITY DATA</p><h2>Upgrade cost database</h2><p>Capture the values shown in game and any active reductions. The planner uses estimated base values so observations made with different bonuses remain comparable.</p></div><div class="completion-ring"><strong>${state.upgradeRecords.length}</strong><span>LOCAL RECORDS</span></div></section>
     <section class="data-layout"><div class="data-form data-callout"><header><p class="eyebrow">QUICK ENTRY</p><h2>Fill a missing value</h2></header><p>Open a missing-data link anywhere in the tracker to arrive with the item and next missing level filled in, or start a new observation here.</p><button class="button primary" type="button" data-add-record>+ Record upgrade data</button><div class="data-method"><b>HOW NORMALIZATION WORKS</b><p>If the game shows 900 food with a 10% reduction, we retain 900 as the observation and estimate the underlying cost as 1,000. Both values and the bonus context are exported for later pattern analysis.</p></div></div>
     <section class="data-records"><header><div><p class="eyebrow">LOCAL DATABASE</p><h2>Upgrade observations</h2></div><div><button class="button secondary" id="exportData">Export JSON</button><label class="button secondary import-button">Import JSON<input id="importData" type="file" accept="application/json"></label></div></header>${state.upgradeRecords.length ? `<div class="record-table">${state.upgradeRecords.map((record,index)=>`<article><div><span>${record.category} · ${record.observation ? 'NORMALIZED' : 'BASE VALUE'}</span><b>${record.item} → ${record.level}</b><small>${resourceNames.filter(name=>record.resources?.[name]).map(name=>`${formatNumber(record.resources[name])} ${name}`).join(' · ') || 'No resources'} · ${formatDuration(record.minutes)}${record.observation?.resourceReduction ? ` · ${record.observation.resourceReduction}% resource reduction` : ''}${record.observation?.timeReduction ? ` · ${record.observation.timeReduction}% time reduction` : ''}${record.source ? ` · ${record.source}` : ''}</small></div><div class="record-actions"><button data-edit-record="${index}" aria-label="Edit record">✎</button><button data-delete-record="${index}" aria-label="Delete record">×</button></div></article>`).join('')}</div>` : '<div class="empty-records">No observations yet. Click any missing-data prompt in the trackers, or start one here.</div>'}</section></section>
-    <section class="objective-calculator"><div><p class="eyebrow">ANY UPGRADE</p><h2>Target calculator</h2><p>Use exact database identifiers to plan research or any upgrade not yet represented by a tracker card.</p></div><form id="objectiveForm"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star</option><option value="survivor-star">Survivor star</option></select></label><label>ITEM<input name="item" required placeholder="Exact item name or ID"></label><label>CURRENT<input name="current" type="number" min="0" required value="0"></label><label>TARGET<input name="target" type="number" min="1" required value="1"></label><button class="button primary" type="submit">Calculate</button></form><div id="objectiveResult" class="objective-result">Choose an objective to calculate its verified requirements.</div></section>`;
+    <section class="objective-calculator"><div><p class="eyebrow">ANY UPGRADE</p><h2>Target calculator</h2><p>Choose a tracked item to plan its verified requirements.</p></div><form id="objectiveForm"><label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star</option><option value="survivor-star">Survivor star</option></select></label><label>ITEM<select name="item" required>${upgradeItemOptions('building')}</select></label><label>CURRENT<input name="current" type="number" min="0" required value="0"></label><label>TARGET<input name="target" type="number" min="1" required value="1"></label><button class="button primary" type="submit">Calculate</button></form><div id="objectiveResult" class="objective-result">Choose an objective to calculate its verified requirements.</div></section>`;
 }
 
 function updateNormalizationPreview(form) {
@@ -305,12 +331,19 @@ function openUpgradeDialog(trigger = {}) {
   form.reset();
   form.elements.editIndex.value = trigger.editIndex ?? '';
   form.elements.category.value = trigger.category || 'building';
-  form.elements.item.value = trigger.item || '';
+  populateUpgradeItemSelect(form.elements.item, form.elements.category.value, trigger.item || '');
   form.elements.level.value = trigger.level || 1;
   $('#upgradeDialogTitle').textContent = trigger.editIndex === undefined ? 'Record an upgrade' : 'Edit upgrade observation';
   updateNormalizationPreview(form);
   $('#upgradeDialog').showModal();
   setTimeout(() => (form.elements.item.value ? form.elements.food : form.elements.item).focus(), 50);
+}
+
+let pendingObservation = null;
+function requestUpgradeDialog(trigger = {}) {
+  pendingObservation = trigger;
+  $('#observationReadinessDialog').showModal();
+  setTimeout(() => $('#continueObservation').focus(), 50);
 }
 
 function editUpgradeRecord(index) {
@@ -339,7 +372,7 @@ const pages = {
 };
 
 function bindPageControls() {
-  document.querySelectorAll('[data-add-record]').forEach(button => button.addEventListener('click', () => openUpgradeDialog({
+  document.querySelectorAll('[data-add-record]').forEach(button => button.addEventListener('click', () => requestUpgradeDialog({
     category: button.dataset.category, item: button.dataset.item, level: button.dataset.level
   })));
   document.querySelectorAll('.level-stepper').forEach(control => {
@@ -396,7 +429,7 @@ function bindPageControls() {
   document.querySelectorAll('[data-remove-survivor]').forEach(button => button.addEventListener('click', () => {
     state.survivors = state.survivors.filter(item => item.id !== button.dataset.removeSurvivor); save('Survivor removed'); renderRoute();
   }));
-  document.querySelectorAll('[data-edit-record]').forEach(button => button.addEventListener('click', () => editUpgradeRecord(Number(button.dataset.editRecord))));
+  document.querySelectorAll('[data-edit-record]').forEach(button => button.addEventListener('click', () => requestUpgradeDialog({ editIndex: Number(button.dataset.editRecord) })));
   document.querySelectorAll('[data-delete-record]').forEach(button => button.addEventListener('click', () => {
     state.upgradeRecords.splice(Number(button.dataset.deleteRecord), 1); save('Record deleted'); renderRoute();
   }));
@@ -416,6 +449,8 @@ function bindPageControls() {
     const current = Number(values.current); const target = Number(values.target);
     $('#objectiveResult').innerHTML = target <= current ? '<b>Target already reached.</b>' : `<b>${values.item}: ${current} → ${target}</b>${planSummary(values.category, values.item.trim(), current, target)}`;
   });
+  const objectiveForm = $('#objectiveForm');
+  objectiveForm?.elements.category.addEventListener('change', event => populateUpgradeItemSelect(objectiveForm.elements.item, event.target.value));
 }
 
 function renderRoute() {
@@ -431,6 +466,19 @@ $('#profileButton').addEventListener('click', () => { $('#nameInput').value = st
 document.querySelectorAll('[data-close-dialog]').forEach(button => button.addEventListener('click', () => $('#profileDialog').close()));
 document.querySelectorAll('[data-close-survivor]').forEach(button => button.addEventListener('click', () => $('#survivorDialog').close()));
 document.querySelectorAll('[data-close-upgrade]').forEach(button => button.addEventListener('click', () => $('#upgradeDialog').close()));
+document.querySelectorAll('[data-close-readiness]').forEach(button => button.addEventListener('click', () => {
+  pendingObservation = null;
+  $('#observationReadinessDialog').close();
+}));
+$('#continueObservation').addEventListener('click', () => {
+  const trigger = pendingObservation || {};
+  pendingObservation = null;
+  $('#observationReadinessDialog').close();
+  if (trigger.editIndex !== undefined) editUpgradeRecord(trigger.editIndex); else openUpgradeDialog(trigger);
+});
+$('#quickUpgradeForm').elements.category.addEventListener('change', event => {
+  populateUpgradeItemSelect($('#quickUpgradeForm').elements.item, event.target.value);
+});
 $('#quickUpgradeForm').addEventListener('input', event => {
   if (event.target.matches('input')) updateNormalizationPreview(event.currentTarget);
 });
