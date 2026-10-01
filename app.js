@@ -44,11 +44,14 @@ const constructionGroups = [
 
 const buildings = constructionGroups.flatMap(group => group.buildings);
 
-const researchBranches = {
-  Development: ['Construction Speed', 'Research Speed', 'Building Capacity', 'Stamina Recovery'],
-  Economy: ['Food Production', 'Oil Production', 'Lumber Production', 'Gathering Speed'],
-  Combat: ['Fighter Training', 'Ranged Training', 'Vehicle Training', 'March Capacity']
-};
+// Research nodes, costs, and timers will be added to these categories as their
+// verified in-game trees become available.
+const researchTrees = [
+  'Develop', 'Economy', 'Hero', 'Soldier', 'Full Development',
+  'Prosperous Economy', 'Squad 1', 'Squad 2', 'Squad 4',
+  'Alliance Competition', 'Convoy', 'Super Soldiers', 'Squad 3',
+  'Offense Strategy', 'Defense Strategy'
+].map(name => ({ name, id: name.toLowerCase().replace(/\s+/g, '-') }));
 
 const allianceBranches = {
   Growth: ['Alliance Member Limit', 'Alliance Help', 'Construction Support', 'Research Support'],
@@ -89,7 +92,7 @@ const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
 const defaults = {
   profile: { name: '' },
   buildings: Object.fromEntries(buildings.map(({ name }) => [name, 1])),
-  research: Object.fromEntries(Object.values(researchBranches).flat().map(name => [name, 0])),
+  research: {},
   alliance: Object.fromEntries(Object.values(allianceBranches).flat().map(name => [name, 0])),
   ownedHeroes: [],
   heroProgress: {}
@@ -149,15 +152,44 @@ function shardsUsed(steps) {
 function overviewPage() {
   pageHeader('COMMAND CENTER', 'Overview');
   const completedBuildings = Object.values(state.buildings).filter(level => level > 1).length;
-  const researchLevels = Object.values(state.research).reduce((a, b) => a + b, 0);
   return `<section class="hero-banner"><div><span class="chapter">YOUR SURVIVOR RECORD</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record what you have. We will leave power calculations for verified game data.</p></div><div class="level-control summary"><span>HQ</span><strong>${state.buildings.HQ}</strong><small>Change this from Construction</small></div></section>
-  <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH LEVELS</span><strong>${researchLevels}</strong><small>Across your personal research</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
+  <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS TRACKED</span><strong>${completedBuildings} / ${buildings.length}</strong><small>Above starting level</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH TREES</span><strong>${researchTrees.length}</strong><small>Ready for future tree data</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length}</strong><small>From the community roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
   <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set the current level of every building.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Record personal technology levels by branch.</p><b>Open research →</b></a><a class="quick-card" href="#alliance"><span>03</span><h3>Alliance research</h3><p>Keep your alliance technology record nearby.</p><b>Open alliance →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Mark the heroes already in your roster.</p><b>Open heroes →</b></a></section>`;
 }
 
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
   return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Record the level shown in game. No unlock, cost, time, or power values are estimated.</p></div><div class="completion-ring"><strong>${Object.values(state.buildings).filter(v=>v>1).length}</strong><span>UPDATED</span></div></section>${constructionGroups.map(group => `<section class="construction-group"><header><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'}</span></header><div class="card-grid">${group.buildings.map(({ name, description, icon }) => `<article class="tracker-card"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${name}</h3><p>${description}</p></div>${levelControl('buildings', name, state.buildings[name], 30)}</article>`).join('')}</div></section>`).join('')}<p class="source-note">Building names and numbered slots follow the supplied construction directory. Requirements and bonuses will only be added when they can be verified.</p>`;
+}
+
+function researchPage() {
+  pageHeader('TECH LAB', 'Research');
+  const selectedId = location.hash.split('/')[1];
+  const selectedTree = researchTrees.find(tree => tree.id === selectedId);
+
+  if (selectedTree) {
+    return `<section class="page-intro research-intro"><div><p class="eyebrow">RESEARCH TREE</p><h2>${selectedTree.name}</h2><p>This tree is ready for its research nodes when verified game data is available.</p></div><a class="source-link" href="#research">← All research trees</a></section>
+      <section class="research-placeholder" aria-labelledby="research-placeholder-title">
+        <div class="research-placeholder-icon" aria-hidden="true">⌬</div>
+        <p class="eyebrow">TREE DATA COMING SOON</p>
+        <h2 id="research-placeholder-title">${selectedTree.name}</h2>
+        <p>The individual upgrades, prerequisites, levels, and effects will be added here later.</p>
+        <div class="upgrade-data-preview" aria-label="Data tracked for each future research upgrade">
+          <span><i class="resource-dot food"></i><b>Food</b></span>
+          <span><i class="resource-dot metal"></i><b>Metal</b></span>
+          <span><i class="resource-dot oil"></i><b>Oil</b></span>
+          <span class="duration">◷ <b>Completion time</b></span>
+        </div>
+        <small>Each upgrade can use one or more resources and has a set completion time.</small>
+      </section>`;
+  }
+
+  return `<section class="page-intro research-intro"><div><p class="eyebrow">RESEARCH DIRECTORY</p><h2>Choose a research tree</h2><p>Select a category to open its tree. Upgrade data will be added as it becomes available.</p></div><div class="completion-ring"><strong>${researchTrees.length}</strong><span>RESEARCH TREES</span></div></section>
+    <section class="research-directory" aria-labelledby="research-directory-title">
+      <header><div><p class="eyebrow">TECH LAB</p><h2 id="research-directory-title">Research categories</h2></div><span>SELECT A TREE TO OPEN</span></header>
+      <div class="research-tree-grid">${researchTrees.map((tree, index) => `<a class="research-tree-card" href="#research/${tree.id}" aria-label="Open ${tree.name} research tree"><div class="research-tree-image" aria-hidden="true"><span>⌬</span><small>IMAGE</small></div><div><span>${String(index + 1).padStart(2, '0')}</span><h3>${tree.name}</h3><small>OPEN TREE →</small></div></a>`).join('')}</div>
+    </section>
+    <aside class="research-data-note"><b>PLANNING DATA</b><p>Research and construction upgrades use Food, Metal, Oil, or a combination of those resources, plus a set completion time. These values will feed future current-base-to-max calculations.</p><div><span><i class="resource-dot food"></i>Food</span><span><i class="resource-dot metal"></i>Metal</span><span><i class="resource-dot oil"></i>Oil</span><span>◷ Completion time</span></div></aside>`;
 }
 
 function branchPage(type, title, subtitle, branches) {
@@ -187,7 +219,7 @@ function heroCard(item, index, cap) {
 const pages = {
   overview: overviewPage,
   construction: constructionPage,
-  research: () => branchPage('research', 'Research', 'Track the technology levels on your personal research screen.', researchBranches),
+  research: researchPage,
   alliance: () => branchPage('alliance', 'Alliance research', 'Record shared technology levels exactly as they appear for your alliance.', allianceBranches),
   heroes: heroesPage
 };
