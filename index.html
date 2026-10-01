@@ -66,7 +66,7 @@
       <input name="editIndex" type="hidden" value="">
       <div class="data-fields quick-data-fields">
         <label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star tokens</option><option value="survivor-star">Survivor star tokens</option></select></label>
-        <label>ITEM / RESEARCH NODE<input name="item" required placeholder="Exact in-game name"></label>
+        <label>ITEM / RESEARCH NODE<select name="item" required></select></label>
         <label>DESTINATION LEVEL / STEP<input name="level" type="number" min="1" required></label>
         <label>TIME SHOWN (MINUTES)<input name="minutes" type="number" min="0" value="0"></label>
         <label>FOOD SHOWN<input name="food" type="number" min="0" value="0"></label>
@@ -82,6 +82,20 @@
       </div>
       <div class="normalization-preview" id="normalizationPreview" aria-live="polite"></div>
       <div class="dialog-actions"><button class="button secondary" type="button" data-close-upgrade>Cancel</button><button class="button primary" type="submit">Save observation</button></div>
+    </form>
+  </dialog>
+  <dialog id="observationReadinessDialog" class="readiness-dialog">
+    <form method="dialog">
+      <button class="dialog-close" type="button" data-close-readiness aria-label="Close">×</button>
+      <p class="eyebrow">BEFORE YOU RECORD</p><h2>Complete your profile first</h2>
+      <p class="dialog-copy">For the most accurate upgrade observation, make sure the rest of your current game data is filled out before entering the cost shown in game.</p>
+      <ul class="readiness-list">
+        <li>Update your current building and research levels.</li>
+        <li>Record active heroes, survivors, assignments, and star progress.</li>
+        <li>Check every active resource or time reduction.</li>
+      </ul>
+      <p class="readiness-note">You can continue now if your profile is already current.</p>
+      <div class="dialog-actions"><button class="button secondary" type="button" data-close-readiness>Go back</button><button class="button primary" id="continueObservation" type="button">Continue to observation</button></div>
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
