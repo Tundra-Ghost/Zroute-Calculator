@@ -204,7 +204,7 @@ function targetControl(category, item, current, max = 30, label = 'TARGET') {
   return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${item}" type="number" min="${current}" max="${max}" value="${target}"></label>${planSummary(category, item, current, target)}</div>`;
 }
 function starPicker(id, steps, ownerType = 'hero') {
-  return `<div class="star-picker" role="group" aria-label="Star power: ${(steps / 5).toFixed(1)} of 5 stars">${Array.from({length: 5}, (_, star) => `<div class="progress-star" aria-label="Star ${star + 1}">${Array.from({length: 5}, (_, section) => { const step = star * 5 + section + 1; return `<button class="star-section ${step <= steps ? 'filled' : ''}" data-star-owner="${ownerType}" data-id="${id}" data-step="${step}" aria-label="Set star power to ${(step / 5).toFixed(1)}"></button>`; }).join('')}</div>`).join('')}</div>`;
+  return `<div class="star-picker" role="group" aria-label="Star power: ${(steps / 5).toFixed(1)} of 5 stars">${Array.from({length: 5}, (_, star) => `<div class="progress-star" role="group" aria-label="Star ${star + 1}">${Array.from({length: 5}, (_, section) => { const step = star * 5 + section + 1; const filled = step <= steps; return `<button class="star-section ${filled ? 'filled' : ''}" data-star-owner="${ownerType}" data-id="${id}" data-step="${step}" aria-label="Set star power to ${(step / 5).toFixed(1)}" aria-pressed="${filled}"></button>`; }).join('')}</div>`).join('')}</div>`;
 }
 
 function overviewPage() {
