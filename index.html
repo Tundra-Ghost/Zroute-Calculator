@@ -58,6 +58,32 @@
       <div class="dialog-actions"><button class="button secondary" type="button" data-close-survivor>Cancel</button><button class="button primary" type="submit">Add survivor</button></div>
     </form>
   </dialog>
+  <dialog id="upgradeDialog" class="upgrade-dialog">
+    <form id="quickUpgradeForm" method="dialog">
+      <button class="dialog-close" type="button" data-close-upgrade aria-label="Close">×</button>
+      <p class="eyebrow">MISSING DATA</p><h2 id="upgradeDialogTitle">Record an upgrade</h2>
+      <p class="dialog-copy">Enter the numbers currently shown in game. If bonuses are active, add them below and the database will preserve the observation and estimate the unmodified base values.</p>
+      <input name="editIndex" type="hidden" value="">
+      <div class="data-fields quick-data-fields">
+        <label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star tokens</option><option value="survivor-star">Survivor star tokens</option></select></label>
+        <label>ITEM / RESEARCH NODE<input name="item" required placeholder="Exact in-game name"></label>
+        <label>DESTINATION LEVEL / STEP<input name="level" type="number" min="1" required></label>
+        <label>TIME SHOWN (MINUTES)<input name="minutes" type="number" min="0" value="0"></label>
+        <label>FOOD SHOWN<input name="food" type="number" min="0" value="0"></label>
+        <label>METAL SHOWN<input name="metal" type="number" min="0" value="0"></label>
+        <label>OIL SHOWN<input name="oil" type="number" min="0" value="0"></label>
+        <label>SHARDS SHOWN<input name="shards" type="number" min="0" value="0"></label>
+        <label>TOKENS SHOWN<input name="tokens" type="number" min="0" value="0"></label>
+        <label class="wide modifier-heading">ACTIVE BONUSES <small>Use the total reduction shown by personal research, alliance research, statues, survivors, or events.</small></label>
+        <label>RESOURCE REDUCTION %<input name="resourceReduction" type="number" min="0" max="99.99" step="0.01" value="0"></label>
+        <label>TIME REDUCTION %<input name="timeReduction" type="number" min="0" max="99.99" step="0.01" value="0"></label>
+        <label class="wide">BONUS CONTEXT<input name="modifierNote" maxlength="160" placeholder="e.g. Alliance 8% + statue 2%"></label>
+        <label class="wide">SOURCE / NOTE<input name="source" maxlength="160" placeholder="Screenshot, date, or verification note"></label>
+      </div>
+      <div class="normalization-preview" id="normalizationPreview" aria-live="polite"></div>
+      <div class="dialog-actions"><button class="button secondary" type="button" data-close-upgrade>Cancel</button><button class="button primary" type="submit">Save observation</button></div>
+    </form>
+  </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
