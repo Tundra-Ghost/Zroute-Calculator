@@ -51,3 +51,7 @@ Each record identifies a category, exact item name or ID, destination level, nor
 ```
 
 Normalization is explicitly labeled as an estimate because the game's rounding rules are not yet known; the original observation is never discarded. The tracker does not invent missing requirements or bonuses. All progress and upgrade data is stored only in the player's browser unless it is explicitly exported.
+
+## Releasing
+
+`index.html` loads `styles.css`, `app.js` and `data/game-data.js` with a `?v=` version. Change that version whenever those files change, so browsers fetch the new copies instead of a cached one.
