@@ -229,9 +229,9 @@ const formatPercent = value => `${Math.round(value * 100) / 100}%`;
 
 function requirementLabel(req) {
   const [kind, ref, level] = req;
-  if (kind === 'b') return `${ref.map(id => buildingDefById.get(id)?.name || `Building ${id}`).join(' or ')} ${level}`;
-  if (kind === 'c') return `${GAME.buildings.filter(def => def.class === ref).map(def => def.name).join(' or ') || `Building class ${ref}`} ${level}`;
-  return `${researchById.get(ref)?.name || `Research ${ref}`} ${level}`;
+  if (kind === 'b') return `${ref.map(id => buildingDefById.get(id)?.name || `Building ${id}`).join(' or ')} Lv ${level}`;
+  if (kind === 'c') return `${GAME.buildings.filter(def => def.class === ref).map(def => def.name).join(' or ') || `Building class ${ref}`} Lv ${level}`;
+  return `${researchById.get(ref)?.name || `Research ${ref}`} Lv ${level}`;
 }
 function requirementMet(req) {
   const [kind, ref, level] = req;
@@ -747,14 +747,20 @@ function treeLayout(nodes) {
   });
   return { rows, column };
 }
+// What a locked node still needs before its first level.
+function lockNote(node) {
+  if (nodeStatus(node) !== 'locked') return '';
+  const missing = (node.req[0] || []).filter(req => !requirementMet(req)).map(requirementLabel).join(', ');
+  return `<em class="node-lock" title="Needs ${escapeHtml(missing)}">🔒 Needs ${escapeHtml(missing)}</em>`;
+}
 function researchTreeMarkup(tree, selected) {
   const nodes = nodesInTree(tree);
   const { rows, column } = treeLayout(nodes);
-  const rowHeight = 118; const tileHeight = 88; const height = rows.length * rowHeight;
+  const rowHeight = 128; const tileHeight = 98; const height = rows.length * rowHeight;
   const x = id => (column.get(id) * 2 + 1) * 100;
   const y = node => node.tier * rowHeight + rowHeight / 2;
   const lines = nodes.flatMap(node => node.parents.map(id => { const parent = researchById.get(id); return `<line class="${researchLevel(id) > 0 ? 'done' : ''}" x1="${x(id)}" y1="${y(parent) + tileHeight / 2}" x2="${x(node.id)}" y2="${y(node) - tileHeight / 2}" vector-effect="non-scaling-stroke"/>`; })).join('');
-  const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px">${iconImg(node.icon, 'node-icon')}<b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small><i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
+  const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px">${iconImg(node.icon, 'node-icon')}<b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small>${lockNote(node)}<i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
   return `<div class="research-tree" style="height:${height}px"><svg viewBox="0 0 600 ${height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${tiles}</div>`;
 }
 function researchDetail(node) {
@@ -764,7 +770,7 @@ function researchDetail(node) {
   return `<aside class="node-detail" id="nodeDetail"><p class="eyebrow">RESEARCH NODE</p><h2>${iconImg(node.icon, 'detail-icon')}${escapeHtml(node.name)}</h2>
     <div class="node-level">${levelControl('research', node.id, level, node.max)}<small>${level >= node.max ? 'Maxed' : `Level ${level} of ${node.max}`}</small></div>
     ${effects ? `<ul class="node-effects">${effects}</ul>` : ''}
-    ${level < node.max ? `<p class="eyebrow">NEXT LEVEL NEEDS</p><ul class="node-reqs">${reqs.length ? reqs.map(req => `<li class="${requirementMet(req) ? 'met' : ''}">${requirementMet(req) ? '✓' : '✗'} ${escapeHtml(requirementLabel(req))}</li>`).join('') : '<li class="met">✓ Nothing</li>'}</ul>` : ''}
+    ${level < node.max ? `<p class="eyebrow">${level ? 'NEXT LEVEL NEEDS' : 'UNLOCK NEEDS'}</p><ul class="node-reqs">${reqs.length ? reqs.map(req => `<li class="${requirementMet(req) ? 'met' : ''}">${requirementMet(req) ? '✓' : '✗'} ${escapeHtml(requirementLabel(req))}</li>`).join('') : '<li class="met">✓ Nothing</li>'}</ul>` : ''}
     ${targetControl('research', String(node.id), level, node.max)}</aside>`;
 }
 function researchPage() {

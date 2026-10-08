@@ -167,3 +167,4 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .skill-next{font-size:9px;color:var(--gold);margin:0}.skill-fixed{font-size:9px;color:#6f7b75;margin:auto 0 0}
 .skill-quad .level-pair{grid-template-columns:1fr 1.4fr;margin-top:auto}
 @media(max-width:900px){.skill-quads{grid-template-columns:1fr}.level-pair{grid-template-columns:1fr}}
+.node-lock{display:block;font-style:normal;font-size:8px;line-height:1.25;color:#e0a36c;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
