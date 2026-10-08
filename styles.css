@@ -168,3 +168,19 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .skill-quad .level-pair{grid-template-columns:1fr 1.4fr;margin-top:auto}
 @media(max-width:900px){.skill-quads{grid-template-columns:1fr}.level-pair{grid-template-columns:1fr}}
 .node-lock{display:block;font-style:normal;font-size:8px;line-height:1.25;color:#e0a36c;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* Hero management tabs (Level Up / Skill / Star Up, like the game) */
+.hero-card:has(.hero-manage[open]){grid-column:1/-1}
+.hero-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:12px;border-bottom:2px solid #3a2f1c}
+.hero-tabs button{padding:10px 8px;background:#151b19;border:1px solid #2b3431;border-bottom:0;color:#b9c2bd;font:700 15px var(--display);letter-spacing:.5px;cursor:pointer}
+.hero-tabs button.active{background:linear-gradient(#6b4a22,#3a2a14);border-color:#8a6a2a;color:#ffe2a6}
+.hero-tabs button:hover:not(.active){color:#fff;border-color:#4a5753}
+.hero-pane{display:none;flex-direction:column;gap:12px}.hero-pane.active{display:flex}
+.hero-manage .hero-details{margin-top:0;padding-top:12px;border-top:0}
+.skill-badge{position:relative;flex:none}.skill-badge .skill-icon{width:52px;height:52px;border:2px solid #8a6a2a;display:block}
+.skill-badge em{position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:#20252a;color:#fff;font:700 9px var(--body);font-style:normal;padding:1px 5px;white-space:nowrap}
+.skill-quad>header{align-items:flex-start}.skill-unlock{display:block;color:#6f7b75!important}
+.skill-stars{list-style:none;margin:0;padding:0;display:grid;gap:2px;font-size:9px}
+.skill-stars li{display:grid;grid-template-columns:52px 1fr;gap:6px;padding:3px 6px;background:#0c1110;color:#7b8580}
+.skill-stars li span{color:#555e5a;letter-spacing:-1px}.skill-stars li.got{color:#a6e07a}.skill-stars li.got span{color:#f2c94c}
+.skill-quad .level-pair{grid-template-columns:1fr 1.3fr}
+@media(max-width:700px){.skill-quads{grid-template-columns:1fr}}

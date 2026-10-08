@@ -685,7 +685,7 @@ function filterItems() {
   ];
 }
 
-const ui = { buildingSearch: '', hideLocked: false, collapsed: new Set(), openCards: new Set(), selectedNode: {}, closedPanels: new Set(), openHeroes: new Set(), heroOwnedOnly: false };
+const ui = { buildingSearch: '', hideLocked: false, collapsed: new Set(), openCards: new Set(), selectedNode: {}, closedPanels: new Set(), openHeroes: new Set(), heroOwnedOnly: false, heroTabs: {} };
 function isLocked(item) {
   if (item.research) return researchLevel(item.research) < 1;
   return item.name !== 'HQ' && hqLevel() < item.unlock;
@@ -867,6 +867,12 @@ function promotionNote(hero, owned, progress) {
 function heroHasTargets(hero) {
   return Object.keys(state.targets).some(key => key.split(':')[1]?.split('|')[0] === hero.id && Number(state.targets[key]) > 0);
 }
+// In-game style tabs inside a hero's manage panel. The open tab is remembered per hero.
+function heroTabs(hero, tabs) {
+  const active = ui.heroTabs?.[hero.id] || 'level';
+  return `<div class="hero-tabs" role="tablist">${tabs.map(([key, label]) => `<button type="button" role="tab" class="${key === active ? 'active' : ''}" data-hero-tab="${key}" data-id="${hero.id}" aria-selected="${key === active}">${label}</button>`).join('')}</div>
+    <div class="hero-details">${tabs.map(([key, , body]) => `<div class="hero-pane ${key === active ? 'active' : ''}" data-pane="${key}">${body}</div>`).join('')}</div>`;
+}
 function heroCard(item, index, cap) {
   const owned = state.ownedHeroes.includes(item.id);
   const progress = heroProgress(item);
@@ -880,15 +886,19 @@ function heroCard(item, index, cap) {
     const level = Math.min(limit, Number(progress.skills[slot]) || 1);
     const effect = skill.byStar?.[wholeStars] || skill.description || '';
     const nextStar = skill.starUpgrades?.[wholeStars];
-    return `<div class="skill-quad"><header>${iconImg(item.skillIcons?.[slot - 1], 'skill-icon')}<div><b>${escapeHtml(skill.name)}</b><small>${escapeHtml([skill.type, skill.cooldown && skill.cooldown !== 'Passive' ? `CD ${skill.cooldown}` : '', skill.unlock].filter(Boolean).join(' · '))}</small></div></header>
-      ${effect ? `<p class="skill-effect">${escapeHtml(effect)}${skill.byStar?.length ? ` <i>(at ${wholeStars} ★ max level)</i>` : ''}</p>` : ''}
-      ${nextStar ? `<p class="skill-next">Next star: ${escapeHtml(nextStar)}</p>` : ''}
+    const starList = skill.starUpgrades?.length ? `<ol class="skill-stars">${skill.starUpgrades.map((text, star) => `<li class="${star < wholeStars ? 'got' : ''}"><span>${'★'.repeat(star + 1)}</span>${escapeHtml(text)}</li>`).join('')}</ol>` : '';
+    return `<div class="skill-quad"><header><div class="skill-badge">${iconImg(item.skillIcons?.[slot - 1], 'skill-icon')}<em>Lv.${levelable ? level : 1}</em></div><div><b>${escapeHtml(skill.name)}</b><small>${escapeHtml([skill.type, skill.cooldown && skill.cooldown !== 'Passive' ? `CD ${skill.cooldown}` : ''].filter(Boolean).join(' · '))}</small><small class="skill-unlock">${escapeHtml(skill.unlock || '')}</small></div></header>
+      ${effect ? `<p class="skill-effect">${escapeHtml(effect)}${skill.byStar?.length ? ` <i>(max level at ${wholeStars} ★)</i>` : ''}</p>` : ''}
+      ${starList}
       ${levelable ? `<div class="level-pair"><label class="now-input">LEVEL<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"><small>cap ${limit}</small></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>` : '<p class="skill-fixed">Fixed skill. No skill books needed.</p>'}</div>`;
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>${promotionNote(item, owned, progress)}
-    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary><div class="hero-details"><section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section>
-      <section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="equipment">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section><section class="manage-block skills"><h4>SKILLS · LEVEL CAP ${limit} AT ${stars} ★</h4><div class="skill-quads">${skills}</div></section>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div></details>`:''}
+    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary>${heroTabs(item, [
+        ['level', 'Level Up', `<section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="equipment">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section>${hasGear(item) ? `<section class="manage-block"><h4>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</h4><div class="level-pair"><label class="now-input">LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></section>` : ''}`],
+        ['skill', 'Skill', `<section class="manage-block skills"><h4>SKILLS · LEVEL CAP ${limit} AT ${stars} ★</h4><div class="skill-quads">${skills}</div><small class="gear-note">Raise hero stars to raise the skill level cap.</small></section>`],
+        ['star', 'Star Up', `<section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section>`]
+      ])}</details>`:''}
   </article>`;
 }
 
@@ -993,6 +1003,12 @@ function bindPageControls() {
     const progress = heroProgress({ id: input.dataset.id });
     progress.level = Math.max(1, Math.min(Number(input.max), Number(input.value) || 1));
     state.heroProgress[input.dataset.id] = progress; save(); renderRoute({ keepScroll: true });
+  }));
+  document.querySelectorAll('[data-hero-tab]').forEach(button => button.addEventListener('click', () => {
+    ui.heroTabs = { ...ui.heroTabs, [button.dataset.id]: button.dataset.heroTab };
+    const panel = button.closest('.hero-manage');
+    panel.querySelectorAll('[data-hero-tab]').forEach(tab => { const on = tab === button; tab.classList.toggle('active', on); tab.setAttribute('aria-selected', on); });
+    panel.querySelectorAll('.hero-pane').forEach(pane => pane.classList.toggle('active', pane.dataset.pane === button.dataset.heroTab));
   }));
   document.querySelectorAll('.hero-shards').forEach(input => input.addEventListener('change', () => {
     const hero = heroes.find(item => item.id === input.dataset.id); if (!hero) return;
