@@ -17,15 +17,22 @@ const buildingIcons = {
   'Alpha Research Division': 'α', 'Beta Research Department': 'β', 'Warrior Training Center': '⚔', 'Assault Training Center': '➶', 'Tactical Training Center': '⌖'
 };
 
+const researchNodes = GAME.research;
+const researchById = new Map(researchNodes.map(node => [node.id, node]));
+
 // Every building copy is its own slot with its own level. Multi-copy buildings
 // are numbered and each copy unlocks at the HQ level the game data gives.
 const constructionGroups = ['HQ', 'Economy', 'Military', 'Development', 'Season'].map(name => ({
   name,
-  buildings: GAME.buildings.filter(def => def.group === name).flatMap(def => def.slots.map((unlock, slot) => ({
-    name: def.slots.length > 1 ? `${def.name} ${slot + 1}` : def.name,
-    description: def.slots.length > 1 ? `${def.name} · copy ${slot + 1} unlocks at HQ ${unlock}` : `${def.name}${unlock > 1 ? ` · unlocks at HQ ${unlock}` : ''}`,
-    icon: buildingIcons[def.name] || buildingIcons[name], def, slot, unlock
-  })))
+  buildings: GAME.buildings.filter(def => def.group === name).flatMap(def => {
+    // Some research (Extra Farm and similar) adds one more copy after the HQ copies.
+    const copies = [...def.slots.map(unlock => ({ unlock })), ...(def.researchSlots || []).map(research => ({ unlock: 1, research }))];
+    return copies.map(({ unlock, research }, slot) => ({
+      name: copies.length > 1 ? `${def.name} ${slot + 1}` : def.name,
+      description: research ? `Unlocks with research ${researchById.get(research)?.name || research}` : unlock > 1 ? `Unlocks at HQ ${unlock}` : '',
+      icon: buildingIcons[def.name] || buildingIcons[name], def, slot, unlock, research
+    }));
+  })
 })).filter(group => group.buildings.length);
 const buildings = constructionGroups.flatMap(group => group.buildings);
 const buildingSlot = name => buildings.find(item => item.name === name);
@@ -35,8 +42,6 @@ const slotsByDefId = id => buildings.filter(item => item.def.id === id);
 const iconImg = (src, className = 'game-icon') => src ? `<img class="${className}" src="${src}" alt="" loading="lazy">` : '';
 const slug = value => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const researchTrees = GAME.researchTrees.map(tree => ({ ...tree, gameId: tree.id, id: slug(tree.name) }));
-const researchNodes = GAME.research;
-const researchById = new Map(researchNodes.map(node => [node.id, node]));
 const nodesInTree = tree => researchNodes.filter(node => node.tree === tree.gameId);
 
 const allianceBranches = {
@@ -174,6 +179,13 @@ function researchBenefit(type) {
     return sum + (effect?.values[level - 1] || 0);
   }, 0);
 }
+function flatNote(bonus) {
+  const parts = [['Construction', bonus.buildingFlat], ['Research', bonus.researchFlat]].map(([label, flat]) => {
+    const text = Object.entries(flat).filter(([, value]) => value).map(([name, value]) => `${formatNumber(value)} ${resourceTitles[name].toLowerCase()}`).join(', ');
+    return text && `${label} −${text} per level`;
+  }).filter(Boolean);
+  return parts.length ? ` · ${parts.join(' · ')}` : '';
+}
 function speedBonuses() {
   const bonuses = state.profile.bonuses;
   const vip = GAME.vipBuildingSpeed[Number(bonuses.vipLevel) || 0] || 0;
@@ -183,7 +195,10 @@ function speedBonuses() {
     vip, researchBuilding, researchResearch,
     building: vip + researchBuilding + (Number(bonuses.buildingSpeed) || 0),
     research: researchResearch + (Number(bonuses.researchSpeed) || 0),
-    buildingCost: researchBenefit(GAME.benefitTypes.buildingCost) * 100
+    buildingCost: researchBenefit(GAME.benefitTypes.buildingCost) * 100,
+    // Flat cuts per upgrade (benefit parameter type 2 is a fixed amount).
+    buildingFlat: { food: researchBenefit(20101), metal: researchBenefit(20102) },
+    researchFlat: { food: researchBenefit(20110), metal: researchBenefit(20111), oil: researchBenefit(20112) }
   };
 }
 const speedUp = (seconds, percent) => Math.ceil(seconds / (1 + Math.max(0, percent) / 100));
@@ -277,10 +292,13 @@ function firstMissingLevel(category, item, current, target) {
 /* ---------- Upgrade calculator ---------- */
 
 // Sum a level table from `current` to `target`. Index 0 holds the cost of level 1.
-function tableCost(table, current, target, { speed = 0, costCut = 0 } = {}) {
+// `flat` takes a fixed amount off every level, after the percent cut.
+function tableCost(table, current, target, { speed = 0, costCut = 0, flat = {} } = {}) {
   const result = { resources: emptyResources(), seconds: 0 };
   Object.entries(table.cost || {}).forEach(([name, values]) => {
-    for (let index = current; index < Math.min(target, values.length); index += 1) result.resources[name] += Math.ceil(values[index] * (1 - costCut / 100));
+    for (let index = current; index < Math.min(target, values.length); index += 1) {
+      if (values[index]) result.resources[name] += Math.max(0, Math.ceil(values[index] * (1 - costCut / 100)) - (flat[name] || 0));
+    }
   });
   for (let index = current; index < Math.min(target, (table.time || []).length); index += 1) result.seconds += speedUp(table.time[index], speed);
   return result;
@@ -288,8 +306,8 @@ function tableCost(table, current, target, { speed = 0, costCut = 0 } = {}) {
 function heroForItem(item) { return heroes.find(hero => hero.id === String(item).split('|')[0]); }
 function dataPlan(category, item, current, target) {
   const bonus = speedBonuses();
-  if (category === 'building') { const slotItem = buildingSlot(item); return slotItem && tableCost(slotItem.def, current, target, { speed: bonus.building, costCut: bonus.buildingCost }); }
-  if (category === 'research') { const node = researchById.get(Number(item)); return node && tableCost(node, current, target, { speed: bonus.research }); }
+  if (category === 'building') { const slotItem = buildingSlot(item); return slotItem && tableCost(slotItem.def, current, target, { speed: bonus.building, costCut: bonus.buildingCost, flat: bonus.buildingFlat }); }
+  if (category === 'research') { const node = researchById.get(Number(item)); return node && tableCost(node, current, target, { speed: bonus.research, flat: bonus.researchFlat }); }
   if (category === 'fighter-level') return tableCost(GAME.fighter, current, target);
   if (category === 'fighter-component') return { resources: { ...emptyResources(), componentCopies: sumRange(GAME.fighter.componentCost, current, target) }, seconds: 0 };
   if (category === 'fighter-evolution') return { resources: { ...emptyResources(), evolutionXp: sumRange(GAME.fighter.evolutionXp, current, target) }, seconds: 0 };
@@ -462,7 +480,7 @@ function planGoal(kind, id, level) {
     const isBuilding = key.startsWith('b:');
     const table = isBuilding ? buildingDefById.get(Number(key.slice(2))) : researchById.get(Number(key.slice(2)));
     const current = currentOf(key);
-    const cost = tableCost(table, current, target, isBuilding ? { speed: bonus.building, costCut: bonus.buildingCost } : { speed: bonus.research });
+    const cost = tableCost(table, current, target, isBuilding ? { speed: bonus.building, costCut: bonus.buildingCost, flat: bonus.buildingFlat } : { speed: bonus.research, flat: bonus.researchFlat });
     return { key, isBuilding, name: table.name, current, target, ...cost };
   }).sort((a, b) => (b.isBuilding - a.isBuilding) || a.name.localeCompare(b.name));
   const total = steps.reduce((sum, step) => { planResources.forEach(name => { sum.resources[name] += step.resources[name]; }); sum.seconds += step.seconds; return sum; }, { resources: emptyResources(), seconds: 0 });
@@ -475,7 +493,7 @@ function producerFor(def) { return GAME.producers.find(item => item.building ===
 function outputBonus(output) { const type = GAME.outputBenefits[output]; return type ? researchBenefit(type) : 0; }
 function slotOutput(item) {
   const producer = producerFor(item.def); const level = Number(state.buildings[item.name]) || 0;
-  if (!producer || !level) return null;
+  if (!producer || !level || isLocked(item)) return null;
   return { output: producer.output, perHour: (producer.perHour[level - 1] || 0) * (1 + outputBonus(producer.output)) };
 }
 function hourlyProduction() {
@@ -508,14 +526,14 @@ function resourcesPage() {
   }).join('');
   const groups = Object.entries(speedupCategories).map(([category, label]) => `<fieldset><legend>${label.toUpperCase()} · ${formatDuration(speedupMinutes(category) * 60)}</legend>${GAME.speedups.filter(item => item.category === category).map(item => `<label>${escapeHtml(item.name.replace(/ (Build|Heal|Research|Training) Speedup| Speedup/, ''))}<input type="number" min="0" name="${escapeHtml(item.name)}" value="${Number(state.speedups[item.name]) || 0}"></label>`).join('')}</fieldset>`).join('');
   return `<section class="page-intro"><div><p class="eyebrow">RESOURCES</p><h2>Production and speedups</h2><p>Hourly output comes from your saved building levels and output research. Enter your speedup items to see how much of your planned time they cover.</p></div></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">FROM YOUR BUILDINGS</p><h2>Hourly production</h2></div><a class="button secondary" href="#construction">Update buildings</a></header>${rows ? `<div class="production-values">${rows}</div>` : '<p>Set your Farm, Metal Smelting Plant, Oil Extraction Well, or Training Ground levels to see production.</p>'}<p>Base output only. VIP, events, and survivors are not included.</p></section>
-    <section class="grand-plan max-plan"><header><div><p class="eyebrow">AGAINST YOUR TARGETS</p><h2>Speedup coverage</h2></div></header><div class="grand-plan-values">
+    <details open class="panel grand-plan"><summary><div><p class="eyebrow">FROM YOUR BUILDINGS</p><h2>Hourly production</h2></div><a class="button secondary" href="#construction">Update buildings</a></summary>${rows ? `<div class="production-values">${rows}</div>` : '<p>Set your Farm, Metal Smelting Plant, Oil Extraction Well, or Training Ground levels to see production.</p>'}<p>Base output only. VIP, events, and survivors are not included.</p></details>
+    <details open class="panel grand-plan max-plan"><summary><div><p class="eyebrow">AGAINST YOUR TARGETS</p><h2>Speedup coverage</h2></div></summary><div class="grand-plan-values">
       <article><span>PLANNED BUILD TIME</span><strong>${formatDuration(plan.buildSeconds)}</strong></article>
       <article><span>BUILD TIME LEFT</span><strong>${formatDuration(coverage.buildLeft)}</strong></article>
       <article><span>PLANNED RESEARCH TIME</span><strong>${formatDuration(plan.researchSeconds)}</strong></article>
       <article><span>RESEARCH TIME LEFT</span><strong>${formatDuration(coverage.researchLeft)}</strong></article>
       <article><span>GENERAL SPEEDUPS SPARE</span><strong>${formatDuration(coverage.generalLeft)}</strong></article>
-    </div><p>Build and research speedups go first. General speedups then cover building time, then research time.</p></section>
+    </div><p>Build and research speedups go first. General speedups then cover building time, then research time.</p></details>
     <form id="speedupForm" class="speedup-form power-fields">${groups}</form>
     ${gearReference()}`;
 }
@@ -530,7 +548,7 @@ function gearReference() {
       <div class="upgrade-analytics"><strong>LV 0 TO ${table.levels}</strong>${chips(toMax)}</div>
       ${promotion ? `<div class="upgrade-analytics"><strong>ALL ${table.steps - table.levels} PROMOTION STAGES</strong>${chips(promotion)}</div>` : ''}</article>`;
   }).join('');
-  return `<section class="grand-plan gear-reference"><header><div><p class="eyebrow">PER PIECE · ALL SLOTS COST THE SAME</p><h2>Gear crafting and upgrades</h2></div><a class="button secondary" href="#heroes">Set hero gear</a></header><div class="gear-tables">${rows}</div><p>Base costs. Crafting speed and oil cost research are not applied. R gear cannot be crafted or upgraded. Materials merge 4 to 1: Steel, Steel Component, Heat-resistant Gold, Composite Material, Conductive Crystal.</p></section>`;
+  return `<details open class="panel grand-plan gear-reference"><summary><div><p class="eyebrow">PER PIECE · ALL SLOTS COST THE SAME</p><h2>Gear crafting and upgrades</h2></div><a class="button secondary" href="#heroes">Set hero gear</a></summary><div class="gear-tables">${rows}</div><p>Base costs. Crafting speed and oil cost research are not applied. R gear cannot be crafted or upgraded. Materials merge 4 to 1: Steel, Steel Component, Heat-resistant Gold, Composite Material, Conductive Crystal.</p></details>`;
 }
 
 function plannerPage() {
@@ -555,7 +573,7 @@ function bonusPanel() {
     <label>VIP LEVEL<input name="vipLevel" type="number" min="0" max="${Math.max(0, GAME.vipBuildingSpeed.length - 1)}" value="${Number(values.vipLevel) || 0}"></label>
     <label>OTHER BUILDING SPEED %<input name="buildingSpeed" type="number" min="0" step="0.1" value="${Number(values.buildingSpeed) || 0}"></label>
     <label>OTHER RESEARCH SPEED %<input name="researchSpeed" type="number" min="0" step="0.1" value="${Number(values.researchSpeed) || 0}"></label>
-  </form><p>Building speed <b>${formatPercent(bonus.building)}</b> (VIP ${formatPercent(bonus.vip)} + research ${formatPercent(bonus.researchBuilding)}) · Research speed <b>${formatPercent(bonus.research)}</b> · Building cost cut <b>${formatPercent(bonus.buildingCost)}</b></p></section>`;
+  </form><p>Building speed <b>${formatPercent(bonus.building)}</b> (VIP ${formatPercent(bonus.vip)} + research ${formatPercent(bonus.researchBuilding)}) · Research speed <b>${formatPercent(bonus.research)}</b> · Building cost cut <b>${formatPercent(bonus.buildingCost)}</b>${flatNote(bonus)}</p></section>`;
 }
 
 /* ---------- Pages ---------- */
@@ -588,21 +606,46 @@ function filterItems() {
   ];
 }
 
-const ui = { buildingSearch: '', hideLocked: false, collapsed: new Set(), selectedNode: {} };
-function isLocked(item) { return item.name !== 'HQ' && hqLevel() < item.unlock; }
-function buildingCard(item) {
-  const { name, description, icon, def } = item;
-  const level = Number(state.buildings[name]) || 0;
-  const locked = isLocked(item);
-  return `<article class="tracker-card ${locked ? 'locked' : ''}" data-search="${escapeHtml(name.toLowerCase())}"><div class="tracker-icon">${def.icon ? iconImg(def.icon) : icon}</div><div class="tracker-copy"><h3>${escapeHtml(name)}${locked ? ' <small class="lock-tag">LOCKED</small>' : ''}</h3><p>${escapeHtml(description)} · max ${def.max}</p>${(() => { const out = slotOutput(item); return out ? `<p class="output-note">Produces ${formatNumber(out.perHour)} ${escapeHtml(out.output)}/hr</p>` : ''; })()}${level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', name, level, def.max)}${def.max > 1 ? targetControl('building', name, level, def.max) : planSummary('building', name, level, level, def.max)}</article>`;
+const ui = { buildingSearch: '', hideLocked: false, collapsed: new Set(), openCards: new Set(), selectedNode: {}, closedPanels: new Set(), openHeroes: new Set(), heroOwnedOnly: false };
+function isLocked(item) {
+  if (item.research) return researchLevel(item.research) < 1;
+  return item.name !== 'HQ' && hqLevel() < item.unlock;
+}
+// One collapsible card per building. Each copy is a row with its own level and target.
+function buildingCard(def, slots) {
+  const open = ui.openCards.has(def.id);
+  const rows = slots.map(item => {
+    const level = Number(state.buildings[item.name]) || 0; const locked = isLocked(item);
+    const label = slots.length > 1 ? `Copy ${item.slot + 1}` : 'Level';
+    return `<div class="copy-row ${locked ? 'locked' : ''}"><div class="copy-label"><b>${label}${locked ? ' <small class="lock-tag">LOCKED</small>' : ''}</b>${item.description ? `<small>${escapeHtml(item.description)}</small>` : ''}${!locked && level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', item.name, level, def.max)}${def.max > 1 ? targetControl('building', item.name, level, def.max) : planSummary('building', item.name, level, level, def.max)}</div>`;
+  }).join('');
+  const unlocked = slots.filter(item => !isLocked(item));
+  const levels = slots.map(item => isLocked(item) ? '–' : Number(state.buildings[item.name]) || 0);
+  const output = slots.reduce((sum, item) => sum + (slotOutput(item)?.perHour || 0), 0);
+  const producer = producerFor(def);
+  const plan = slots.reduce((sum, item) => {
+    const level = Number(state.buildings[item.name]) || 0; const target = targetFor('building', item.name, level);
+    if (target <= level) return sum;
+    const cost = calculateUpgrade('building', item.name, level, target);
+    planResources.forEach(name => { sum.resources[name] += cost.resources[name]; }); sum.seconds += cost.seconds; sum.any = true; return sum;
+  }, { resources: emptyResources(), seconds: 0, any: false });
+  const allMax = unlocked.length && unlocked.every(item => (Number(state.buildings[item.name]) || 0) >= def.max);
+  return `<details class="building-card ${unlocked.length ? '' : 'locked'}" data-def="${def.id}" data-search="${escapeHtml(def.name.toLowerCase())}" ${open ? 'open' : ''}>
+    <summary><div class="tracker-icon">${def.icon ? iconImg(def.icon) : slots[0].icon}</div>
+      <div class="building-head"><h3>${escapeHtml(def.name)}${unlocked.length ? '' : ' <small class="lock-tag">LOCKED</small>'}</h3>
+        <p>${slots.length > 1 ? `${unlocked.length} / ${slots.length} copies · ` : ''}max ${def.max}${producer && output ? ` · <span class="output-note">${formatNumber(output)} ${escapeHtml(producer.output)}/hr</span>` : ''}</p></div>
+      <div class="building-levels"><span>${slots.length > 1 ? 'LEVELS' : 'LEVEL'}</span><b>${levels.join(' · ')}</b>${allMax ? '<small class="plan-ready">MAX</small>' : ''}</div>
+      ${plan.any ? `<div class="building-plan"><span>TO TARGET</span>${costChips(plan, 'building', def.name)}</div>` : ''}
+    </summary>
+    <div class="copy-rows">${rows}</div></details>`;
 }
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
-  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Set each building to the level shown in game. Each card shows the next level cost, or the total to your target.</p></div><div class="completion-ring"><strong>HQ ${hqLevel()}</strong><span>${buildings.filter(item => !isLocked(item)).length} / ${buildings.length} UNLOCKED</span></div></section>
+  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Tap a building to open it and set each copy's level and target. The closed card shows your levels and the total cost to your targets.</p></div><div class="completion-ring"><strong>HQ ${hqLevel()}</strong><span>${buildings.filter(item => !isLocked(item)).length} / ${buildings.length} UNLOCKED</span></div></section>
   ${bonusPanel()}
-  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide buildings your HQ has not unlocked</label></section>
-  ${constructionGroups.map(group => { const levels = group.buildings.reduce((sum, item) => sum + (Number(state.buildings[item.name]) || 0), 0); const max = group.buildings.reduce((sum, item) => sum + item.def.max, 0); return `<details class="construction-group" data-group="${group.name}" ${ui.collapsed.has(group.name) ? '' : 'open'}><summary><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'} · ${levels} / ${max} LEVELS</span><span class="group-actions"><button type="button" class="button secondary" data-group-target="max" data-group-name="${group.name}">Target max</button><button type="button" class="button secondary" data-group-target="clear" data-group-name="${group.name}">Clear targets</button></span></summary><div class="card-grid">${group.buildings.map(buildingCard).join('')}</div></details>`; }).join('')}
-  <p class="source-note">Times include the speed bonuses above. Resource costs include the research building cost cut. Flat cost reductions and event bonuses are not applied.</p>`;
+  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide locked buildings and copies</label><span class="toolbar-actions"><button type="button" class="button secondary" data-cards="open">Open all</button><button type="button" class="button secondary" data-cards="close">Close all</button></span></section>
+  ${constructionGroups.map(group => { const levels = group.buildings.reduce((sum, item) => sum + (Number(state.buildings[item.name]) || 0), 0); const max = group.buildings.reduce((sum, item) => sum + item.def.max, 0); return `<details class="construction-group" data-group="${group.name}" ${ui.collapsed.has(group.name) ? '' : 'open'}><summary><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${new Set(group.buildings.map(item => item.def)).size} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'} · ${levels} / ${max} LEVELS</span><span class="group-actions"><button type="button" class="button secondary" data-group-target="max" data-group-name="${group.name}">Target max</button><button type="button" class="button secondary" data-group-target="clear" data-group-name="${group.name}">Clear targets</button></span></summary><div class="building-list">${[...new Set(group.buildings.map(item => item.def))].map(def => buildingCard(def, group.buildings.filter(item => item.def === def))).join('')}</div></details>`; }).join('')}
+  <p class="source-note">Times include the speed bonuses above. Resource costs include the research building cost cut and flat cost cuts. Event bonuses are not applied.</p>`;
 }
 
 function formatEffect(value) { return value > 0 && value < 1 ? `${Math.round(value * 10000) / 100}%` : formatNumber(value); }
@@ -692,13 +735,13 @@ function fighterPage() {
     return `<article class="gear-slot">${iconImg(art, 'slot-icon')}<label>${escapeHtml(name.toUpperCase())}<input class="fighter-component" data-slot="${slot}" type="number" min="0" max="${componentMax}" value="${level}"></label>${targetControl('fighter-component', String(slot), level, componentMax)}</article>`;
   }).join('');
   return `<section class="page-intro"><div><p class="eyebrow">FIGHTER</p><h2>Fighter planner</h2><p>Set your fighter level and stage as the game shows it, then pick a target. Every 5th level, and every level after 150, has five key upgrade stages that also cost Fighter Parts.</p></div></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">FIGHTER LEVEL</p><h2>${fighterRowLabel(current)}</h2></div></header>
+    <details open class="panel grand-plan"><summary><div><p class="eyebrow">NOW ${fighterRowLabel(current).toUpperCase()}</p><h2>Fighter level</h2></div></summary>
       <div class="fighter-level"><label>CURRENT<select id="fighterRow">${rowOptions(current)}</select></label><label>TARGET<select id="fighterTarget">${rowOptions(target, current)}</select></label></div>
       ${planSummary('fighter-level', 'fighter', current, target, max)}
-      <p>Assumes no bonus progress. Lucky bonus clicks make real costs lower.</p></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">COMPONENTS</p><h2>Component levels</h2></div></header><div class="gear-tables">${components}</div><p>Level 0 means the slot is empty. Up to level 8, three pieces merge into one. After that, pieces are fed as XP. Costs are shown as Lv 1 component copies: a level L piece counts as 3^(L-1) copies.</p></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">EVOLUTION</p><h2>Evolution level</h2></div></header><div class="gear-tables"><article class="gear-slot"><label>LEVEL<input class="fighter-evolution" type="number" min="0" max="${GAME.fighter.evolutionXp.length}" value="${state.fighter.evolution}"></label>${targetControl('fighter-evolution', 'evolution', state.fighter.evolution, GAME.fighter.evolutionXp.length)}</article></div><p>Level 0 means not activated. The activation cost and which items give evolution XP are not in the data.</p></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">WINGMAN CHIPS</p><h2>Chip stars</h2></div></header><div class="gear-tables">${chips}</div><p>Star upgrades cost copies of the same chip. </p></section>`;
+      <p>Assumes no bonus progress. Lucky bonus clicks make real costs lower.</p></details>
+    <details open class="panel grand-plan"><summary><div><p class="eyebrow">COMPONENTS</p><h2>Component levels</h2></div></summary><div class="gear-tables">${components}</div><p>Level 0 means the slot is empty. Up to level 8, three pieces merge into one. After that, pieces are fed as XP. Costs are shown as Lv 1 component copies: a level L piece counts as 3^(L-1) copies.</p></details>
+    <details open class="panel grand-plan"><summary><div><p class="eyebrow">EVOLUTION</p><h2>Evolution level</h2></div></summary><div class="gear-tables"><article class="gear-slot"><label>LEVEL<input class="fighter-evolution" type="number" min="0" max="${GAME.fighter.evolutionXp.length}" value="${state.fighter.evolution}"></label>${targetControl('fighter-evolution', 'evolution', state.fighter.evolution, GAME.fighter.evolutionXp.length)}</article></div><p>Level 0 means not activated. The activation cost and which items give evolution XP are not in the data.</p></details>
+    <details open class="panel grand-plan"><summary><div><p class="eyebrow">WINGMAN CHIPS</p><h2>Chip stars</h2></div></summary><div class="gear-tables">${chips}</div><p>Star upgrades cost copies of the same chip. </p></details>`;
 }
 
 // Planned features. Status is Planned, Needs data (blocked on a data source), or Idea.
@@ -723,10 +766,14 @@ function heroesPage() {
   const cap = heroCap();
   return `<section class="page-intro hero-intro"><div><p class="eyebrow">HERO DIRECTORY</p><h2>Your hero roster</h2><p>Track ownership, levels, star power, skills, and equipment. Your HQ ${hqLevel()} hero level cap is ${cap}.</p></div><div class="hero-cap"><span>HERO LEVEL CAP</span><strong>${cap}</strong><small>HQ 30 max · −5 per HQ level</small></div></section>
   <div class="hero-legend"><span><i class="rarity SR">SR</i> Rare</span><span><i class="rarity SSR">SSR</i> Super rare</span><span><i class="rarity UR">UR</i> Ultimate rare</span><span>FL · Frontline</span><span>BL · Backline</span><span>S · Support</span></div>
-  ${['Warrior','Assault','Tactical'].map(heroClass => `<section class="hero-class"><header><div><p class="eyebrow">HERO CLASS</p><h2>${heroClass}</h2></div><span>${heroes.filter(item=>item.heroClass===heroClass).length} HEROES</span></header><div class="hero-grid">${heroes.filter(item=>item.heroClass===heroClass).map((item,index)=>heroCard(item,index,cap)).join('')}</div></section>`).join('')}
+  <section class="toolbar"><label class="check"><input id="heroOwnedOnly" type="checkbox" ${ui.heroOwnedOnly ? 'checked' : ''}> Show only heroes in my roster</label><span class="toolbar-actions"><button type="button" class="button secondary" data-heroes="open">Open all</button><button type="button" class="button secondary" data-heroes="close">Close all</button></span></section>
+  ${['Warrior','Assault','Tactical'].map(heroClass => { const list = heroes.filter(item => item.heroClass === heroClass); const shown = ui.heroOwnedOnly ? list.filter(item => state.ownedHeroes.includes(item.id)) : list; const owned = list.filter(item => state.ownedHeroes.includes(item.id)).length; return shown.length ? `<details open class="panel hero-class"><summary><div><p class="eyebrow">HERO CLASS</p><h2>${heroClass}</h2></div><span>${owned} / ${list.length} OWNED</span></summary><div class="hero-grid">${shown.map(item => heroCard(item, list.indexOf(item), cap)).join('')}</div></details>` : ''; }).join('') || '<p class="empty-note">No heroes in your roster yet. Untick the filter to add some.</p>'}
   <p class="source-note">Hero EXP, star shards (5 / 10 / 20 / 60 / 100 per subsection, 975 total), and skill books come from the game data. Skill level caps rise with stars.</p>`;
 }
 
+function heroHasTargets(hero) {
+  return Object.keys(state.targets).some(key => key.split(':')[1]?.split('|')[0] === hero.id && Number(state.targets[key]) > 0);
+}
 function heroCard(item, index, cap) {
   const owned = state.ownedHeroes.includes(item.id);
   const progress = heroProgress(item);
@@ -739,7 +786,7 @@ function heroCard(item, index, cap) {
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
-    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div>`:''}
+    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${skillSlots.map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary><div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div></details>`:''}
   </article>`;
 }
 
@@ -917,9 +964,10 @@ function bindPageControls() {
     const query = ui.buildingSearch.trim().toLowerCase();
     document.querySelectorAll('.construction-group').forEach(group => {
       let visible = 0;
-      group.querySelectorAll('.tracker-card').forEach(card => {
+      group.querySelectorAll('.building-card').forEach(card => {
         const show = (!query || card.dataset.search.includes(query)) && !(ui.hideLocked && card.classList.contains('locked'));
         card.hidden = !show; if (show) visible += 1;
+        card.querySelectorAll('.copy-row').forEach(row => { row.hidden = ui.hideLocked && row.classList.contains('locked'); });
       });
       group.hidden = !visible;
       if (query && visible) group.open = true;
@@ -928,6 +976,27 @@ function bindPageControls() {
   $('#buildingSearch')?.addEventListener('input', event => { ui.buildingSearch = event.target.value; applyBuildingFilter(); });
   $('#hideLocked')?.addEventListener('change', event => { ui.hideLocked = event.target.checked; applyBuildingFilter(); });
   if ($('#buildingSearch')) applyBuildingFilter();
+  $('#heroOwnedOnly')?.addEventListener('change', event => { ui.heroOwnedOnly = event.target.checked; renderRoute({ keepScroll: true }); });
+  document.querySelectorAll('[data-heroes]').forEach(button => button.addEventListener('click', () => {
+    const open = button.dataset.heroes === 'open';
+    document.querySelectorAll('details.hero-manage').forEach(card => { card.open = open; });
+  }));
+  document.querySelectorAll('details.hero-manage').forEach(card => card.addEventListener('toggle', () => {
+    if (card.open) ui.openHeroes.add(card.dataset.heroId); else ui.openHeroes.delete(card.dataset.heroId);
+  }));
+  // Collapsible panels remember their closed state by page and title.
+  document.querySelectorAll('details.panel').forEach(panel => {
+    const key = `${location.hash.split('/')[0]}|${panel.querySelector('summary h2')?.textContent}`;
+    if (ui.closedPanels.has(key)) panel.open = false;
+    panel.addEventListener('toggle', () => { if (panel.open) ui.closedPanels.delete(key); else ui.closedPanels.add(key); });
+  });
+  document.querySelectorAll('[data-cards]').forEach(button => button.addEventListener('click', () => {
+    const open = button.dataset.cards === 'open';
+    document.querySelectorAll('details.building-card').forEach(card => { if (!card.hidden) card.open = open; });
+  }));
+  document.querySelectorAll('details.building-card').forEach(card => card.addEventListener('toggle', () => {
+    const id = Number(card.dataset.def); if (card.open) ui.openCards.add(id); else ui.openCards.delete(id);
+  }));
   document.querySelectorAll('details.construction-group').forEach(group => group.addEventListener('toggle', () => {
     if (group.open) ui.collapsed.delete(group.dataset.group); else ui.collapsed.add(group.dataset.group);
   }));

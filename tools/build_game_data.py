@@ -48,6 +48,9 @@ HERO_TYPE = {1: 'FL', 2: 'S', 3: 'BL'}
 # Untranslated keys, decorations and the vehicle are not player-facing buildings.
 HIDDEN_NAME = re.compile(r'^(buildingname_|decoration_|itemname_|hero_secret|BuildingName_|armed_truck)', re.I)
 DECORATION_CLASS = 40
+# Research benefits that add one more copy of a building. 30007 says "Barracks";
+# the game's barracks is the Soldier Training Camp.
+SLOT_BENEFITS = {30004: 1016, 30005: 1017, 30006: 1019, 30007: 1020, 30008: 1004, 30009: 5006}
 
 
 def icon(folder, name):
@@ -97,8 +100,20 @@ def slot_unlocks(count_limits):
     return unlocks or [1]
 
 
+def research_slots(progression):
+    """Building id -> research ids that each add one more copy."""
+    slots = {}
+    for node in progression['research']:
+        for level in node['levels']:
+            for benefit in level.get('benefits', []):
+                if benefit['type'] in SLOT_BENEFITS:
+                    slots.setdefault(SLOT_BENEFITS[benefit['type']], []).append(node['id'])
+    return slots
+
+
 def build_buildings(progression):
     buildings, seen = [], set()
+    extra_slots = research_slots(progression)
     for raw in progression['buildings']:
         name = RENAMES.get(raw['id'], raw['name'])
         if raw['class'] == DECORATION_CLASS or HIDDEN_NAME.match(name) or raw['type'] not in GROUPS and raw['id'] != 1001:
@@ -119,6 +134,7 @@ def build_buildings(progression):
             'cost': cost_columns(levels),
             'req': [compact_requirements(level['prerequisites']) for level in levels],
             'icon': icon('buildings', raw['id']),
+            'researchSlots': extra_slots.get(raw['id'], []),
         })
     order = ['HQ', 'Economy', 'Military', 'Development', 'Season']
     buildings.sort(key=lambda item: (order.index(item['group']), item['id']))
