@@ -1,0 +1,2447 @@
+{
+ "source": "github.com/JeffxLabs/zrouteredemption data/heroes_directory.json + hero_skills.json (commit 249628d)",
+ "heroes": {
+  "10005": [
+   {
+    "slot": 1,
+    "name": "Heavy Rifle",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.85s",
+    "description": "Fires heavy ammunition to attack enemies, dealing damage equal to 340.9% ATK.",
+    "byStar": [
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 64% ATK.",
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 76.81% ATK.",
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 107.28% ATK.",
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 151.31% ATK.",
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 222.82% ATK.",
+     "Fires heavy ammunition to attack enemies, dealing damage equal to 340.9% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Grenadier",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.2s",
+    "description": "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 370.25% ATK.",
+    "byStar": [
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 108.33% ATK.",
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 130% ATK.",
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 147.08% ATK.",
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 203.54% ATK.",
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 255.16% ATK.",
+     "Throws grenades consecutively to attack random enemies 4 times, dealing damage equal to 370.25% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Increases the number of attacks to 6.",
+     "Bonus damage is increased to 45%.",
+     "Increases the number of attacks to 8.",
+     "Bonus damage is increased to 70%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Caliber Modification",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases ATK by 28.15%.",
+    "byStar": [
+     "In combat, increases ATK by 10.46%.",
+     "In combat, increases ATK by 10.46%.",
+     "In combat, increases ATK by 12.9%.",
+     "In combat, increases ATK by 15.95%.",
+     "In combat, increases ATK by 22.05%.",
+     "In combat, increases ATK by 28.15%."
+    ],
+    "starUpgrades": [
+     "Increases ATK by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "10006": [
+   {
+    "slot": 1,
+    "name": "Militia Rocket Launcher",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.2s",
+    "description": "Launches rockets at 2 random enemies, dealing damage equal to 223.19% ATK.",
+    "byStar": [
+     "Launches rockets at 2 random enemies, dealing damage equal to 41.13% ATK.",
+     "Launches rockets at 2 random enemies, dealing damage equal to 49.36% ATK.",
+     "Launches rockets at 2 random enemies, dealing damage equal to 69.27% ATK.",
+     "Launches rockets at 2 random enemies, dealing damage equal to 98.13% ATK.",
+     "Launches rockets at 2 random enemies, dealing damage equal to 145.35% ATK.",
+     "Launches rockets at 2 random enemies, dealing damage equal to 223.19% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Scavenger",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.3s",
+    "description": "Launches serum rockets at enemies, dealing damage equal to 907.36% ATK and increasing damage from monsters by 9% for 7s.",
+    "byStar": [
+     "Launches serum rockets at enemies, dealing damage equal to 183.72% ATK and increasing damage from monsters by 9% for 7s.",
+     "Launches serum rockets at enemies, dealing damage equal to 220.47% ATK and increasing damage from monsters by 9% for 7s.",
+     "Launches serum rockets at enemies, dealing damage equal to 302.25% ATK and increasing damage from monsters by 9% for 7s.",
+     "Launches serum rockets at enemies, dealing damage equal to 418.85% ATK and increasing damage from monsters by 9% for 7s.",
+     "Launches serum rockets at enemies, dealing damage equal to 602.29% ATK and increasing damage from monsters by 9% for 7s.",
+     "Launches serum rockets at enemies, dealing damage equal to 907.36% ATK and increasing damage from monsters by 9% for 7s."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Treasure Hunter",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, deals 12.03% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 77%.",
+    "byStar": [
+     "In combat, deals 4.56% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 25.9%.",
+     "In combat, deals 4.56% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 30.9%.",
+     "In combat, deals 5.59% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 39.5%.",
+     "In combat, deals 6.88% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 49%.",
+     "In combat, deals 9.45% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 63%.",
+     "In combat, deals 12.03% more damage to monsters. After your squad defeats Metal Zombies, Food Zombies, Oil Zombies, and Zombie Elite Hordes, the resource acquisition of Oil, Food, and Iron Mine increases by 77%."
+    ],
+    "starUpgrades": [
+     "Increases damage to monsters by 3% and resource gain by 5%.",
+     "Increases bonus effect to 6% and 10%.",
+     "Increases bonus effect to 9% and 15%.",
+     "Increases bonus effect to 12% and 20%.",
+     "Increases bonus effect to 15% and 25%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "10007": [
+   {
+    "slot": 1,
+    "name": "Tactical Shotgun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.7s",
+    "description": "Attacks enemies with a shotgun, dealing damage equal to 503.2% ATK.",
+    "byStar": [
+     "Attacks enemies with a shotgun, dealing damage equal to 72.2% ATK.",
+     "Attacks enemies with a shotgun, dealing damage equal to 93.86% ATK.",
+     "Attacks enemies with a shotgun, dealing damage equal to 137.7% ATK.",
+     "Attacks enemies with a shotgun, dealing damage equal to 202.4% ATK.",
+     "Attacks enemies with a shotgun, dealing damage equal to 324.9% ATK.",
+     "Attacks enemies with a shotgun, dealing damage equal to 503.2% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Field Support",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.2s",
+    "description": "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 30% for 8s.",
+    "byStar": [
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 16.05% for 5s.",
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 16.05% for 6s.",
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 22.5% for 6s.",
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 24% for 7s.",
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 27% for 7s.",
+     "Provides cover with a shield, reducing front-row allies' incoming Physical DMG by 30% for 8s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 6 second(s).",
+     "Reduces Physical DMG taken by 5%.",
+     "Increases duration to 7 second(s).",
+     "Affects all allies.",
+     "Increases duration to 8 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Tactical Shield",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces front-row allies' incoming damage by 17.7%.",
+    "byStar": [
+     "In combat, reduces front-row allies' incoming damage by 4.3%.",
+     "In combat, reduces front-row allies' incoming damage by 6.4%.",
+     "In combat, reduces front-row allies' incoming damage by 8.9%.",
+     "In combat, reduces front-row allies' incoming damage by 11.5%.",
+     "In combat, reduces front-row allies' incoming damage by 14.6%.",
+     "In combat, reduces front-row allies' incoming damage by 17.7%."
+    ],
+    "starUpgrades": [
+     "Reduces damage taken by 2%.",
+     "Increases bonus effect to 4%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 10%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "10008": [
+   {
+    "slot": 1,
+    "name": "Flamethrower",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "4.2s",
+    "description": "Spews fire at enemies, dealing damage equal to 803.79% ATK.",
+    "byStar": [
+     "Spews fire at enemies, dealing damage equal to 163.75% ATK.",
+     "Spews fire at enemies, dealing damage equal to 196.51% ATK.",
+     "Spews fire at enemies, dealing damage equal to 269% ATK.",
+     "Spews fire at enemies, dealing damage equal to 372.25% ATK.",
+     "Spews fire at enemies, dealing damage equal to 534.23% ATK.",
+     "Spews fire at enemies, dealing damage equal to 803.79% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 70%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Roar",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.1s",
+    "description": "Invigorates the spirit with a primal shout, reducing damage from monsters by 29.15% for 7s.",
+    "byStar": [
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 11.31% for 7s.",
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 11.31% for 7s.",
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 13.77% for 7s.",
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 16.85% for 7s.",
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 23% for 7s.",
+     "Invigorates the spirit with a primal shout, reducing damage from monsters by 29.15% for 7s."
+    ],
+    "starUpgrades": [
+     "Takes 5% less damage from monsters.",
+     "Increases duration to 8 second(s).",
+     "Increases bonus effect to 10%.",
+     "Increases duration to 9 second(s).",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Robust Physique",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases DEF by 61.6%.",
+    "byStar": [
+     "In combat, increases DEF by 22.45%.",
+     "In combat, increases DEF by 22.45%.",
+     "In combat, increases DEF by 27.85%.",
+     "In combat, increases DEF by 34.6%.",
+     "In combat, increases DEF by 48.1%.",
+     "In combat, increases DEF by 61.6%."
+    ],
+    "starUpgrades": [
+     "Increases DEF by 10%.",
+     "Increases bonus effect to 20%.",
+     "Increases bonus effect to 30%.",
+     "Increases bonus effect to 40%.",
+     "Increases bonus effect to 50%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "20005": [
+   {
+    "slot": 1,
+    "name": "Recurve Bow",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.3s",
+    "description": "Shoots arrows at enemies, dealing damage equal to 200.69% ATK.",
+    "byStar": [
+     "Shoots arrows at enemies, dealing damage equal to 40.84% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 49% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 67.1% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 92.88% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 133.35% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 200.69% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Cheer Captain",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.2s",
+    "description": "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 25.1% for 5s.",
+    "byStar": [
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 7.41% for 5s.",
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 7.41% for 5s.",
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 9.85% for 5s.",
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 12.9% for 5s.",
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 19% for 5s.",
+     "Boosts Morale with graceful dancing, increasing back-row allies' damage to monsters by 25.1% for 5s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 6 second(s).",
+     "Deals 2% more damage to monsters.",
+     "Increases duration to 7 second(s).",
+     "Deals 4% more damage to monsters.",
+     "Increases duration to 8 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Agile Stance",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces damage from monsters by 33.05%.",
+    "byStar": [
+     "In combat, reduces damage from monsters by 9.41%.",
+     "In combat, reduces damage from monsters by 9.41%.",
+     "In combat, reduces damage from monsters by 12.67%.",
+     "In combat, reduces damage from monsters by 16.75%.",
+     "In combat, reduces damage from monsters by 24.9%.",
+     "In combat, reduces damage from monsters by 33.05%."
+    ],
+    "starUpgrades": [
+     "Takes 2% less damage from monsters.",
+     "Increases bonus effect to 4%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 10%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "20006": [
+   {
+    "slot": 1,
+    "name": "Spear Launcher",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.1s",
+    "description": "Hurls a spear at the enemy, dealing damage equal to 201.69% ATK.",
+    "byStar": [
+     "Hurls a spear at the enemy, dealing damage equal to 41.23% ATK.",
+     "Hurls a spear at the enemy, dealing damage equal to 49.48% ATK.",
+     "Hurls a spear at the enemy, dealing damage equal to 67.68% ATK.",
+     "Hurls a spear at the enemy, dealing damage equal to 93.58% ATK.",
+     "Hurls a spear at the enemy, dealing damage equal to 134.15% ATK.",
+     "Hurls a spear at the enemy, dealing damage equal to 201.69% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Battle Anthem",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.2s",
+    "description": "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 34.8% for 6s.",
+    "byStar": [
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 16.68% for 6s.",
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 16.68% for 6s.",
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 19.18% for 6s.",
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 22.3% for 6s.",
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 28.55% for 6s.",
+     "Chant a battle hymn to boost Morale, increasing front-row allies' DEF by 34.8% for 6s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 7 second(s).",
+     "Increases DEF by 5%.",
+     "Increases duration to 8 second(s).",
+     "Increases bonus effect to 10%.",
+     "Increases duration to 9 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Athlete",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces damage from monsters by 26.95%.",
+    "byStar": [
+     "In combat, reduces damage from monsters by 9.12%.",
+     "In combat, reduces damage from monsters by 9.12%.",
+     "In combat, reduces damage from monsters by 11.58%.",
+     "In combat, reduces damage from monsters by 14.65%.",
+     "In combat, reduces damage from monsters by 20.8%.",
+     "In combat, reduces damage from monsters by 26.95%."
+    ],
+    "starUpgrades": [
+     "Takes 2% less damage from monsters.",
+     "Increases bonus effect to 4%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 10%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "20009": [
+   {
+    "slot": 1,
+    "name": "Pneumatic Launcher",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.7s",
+    "description": "Throws a Molotov cocktail at enemies, dealing damage equal to 352.75% ATK.",
+    "byStar": [
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 65.7% ATK.",
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 78.84% ATK.",
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 110.34% ATK.",
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 155.93% ATK.",
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 230.2% ATK.",
+     "Throws a Molotov cocktail at enemies, dealing damage equal to 352.75% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Multiple Loading",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.3s",
+    "description": "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 946.38% ATK.",
+    "byStar": [
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 193.39% ATK.",
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 232.06% ATK.",
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 317.44% ATK.",
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 438.99% ATK.",
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 629.4% ATK.",
+     "Continuously launches multiple high-explosive Molotov cocktails, randomly attacking 2 enemies, dealing damage equal to 946.38% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "High Pressure Air Pump",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases ATK by 25.25%.",
+    "byStar": [
+     "In combat, increases ATK by 10.46%.",
+     "In combat, increases ATK by 10.46%.",
+     "In combat, increases ATK by 12.5%.",
+     "In combat, increases ATK by 15.05%.",
+     "In combat, increases ATK by 20.15%.",
+     "In combat, increases ATK by 25.25%."
+    ],
+    "starUpgrades": [
+     "Increases ATK by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30001": [
+   {
+    "slot": 1,
+    "name": "Liquid Injector",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.7s",
+    "description": "Sprays corrosive liquid at enemies, dealing damage equal to 346.25% ATK.",
+    "byStar": [
+     "Sprays corrosive liquid at enemies, dealing damage equal to 66% ATK.",
+     "Sprays corrosive liquid at enemies, dealing damage equal to 79.2% ATK.",
+     "Sprays corrosive liquid at enemies, dealing damage equal to 110.2% ATK.",
+     "Sprays corrosive liquid at enemies, dealing damage equal to 154.88% ATK.",
+     "Sprays corrosive liquid at enemies, dealing damage equal to 227% ATK.",
+     "Sprays corrosive liquid at enemies, dealing damage equal to 346.25% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Venom Burst",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.3s",
+    "description": "Fires a venom shot, prioritizing 2 front-row enemies, dealing 609.05% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+    "byStar": [
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 58.45% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 70.15% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 121.79% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 202.86% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 359.54% of ATK as DMG, and reducing their ATK by 6% for 4s.",
+     "Fires a venom shot, prioritizing 2 front-row enemies, dealing 609.05% of ATK as DMG, and reducing their ATK by 6% for 4s."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Nimble Steps",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces damage from monsters by 27.35%.",
+    "byStar": [
+     "In combat, reduces damage from monsters by 9.52%.",
+     "In combat, reduces damage from monsters by 9.52%.",
+     "In combat, reduces damage from monsters by 11.97%.",
+     "In combat, reduces damage from monsters by 15.05%.",
+     "In combat, reduces damage from monsters by 21.2%.",
+     "In combat, reduces damage from monsters by 27.35%."
+    ],
+    "starUpgrades": [
+     "Takes 3% less damage from monsters.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30003": [
+   {
+    "slot": 1,
+    "name": "Automatic Rifle",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.4s",
+    "description": "Fires pulse bullets at enemies, dealing damage equal to 234.65% ATK.",
+    "byStar": [
+     "Fires pulse bullets at enemies, dealing damage equal to 45.43% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 54.52% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 75.56% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 105.81% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 154.32% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 234.65% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Unload Magazine",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.1s",
+    "description": "Unleashes rapid fire at enemies, dealing damage equal to 1753.53% ATK.",
+    "byStar": [
+     "Unleashes rapid fire at enemies, dealing damage equal to 366.75% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 440.1% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 598.72% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 823.57% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 1172.02% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 1753.53% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Zombie Hunter",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, back-row Warrior allies deal 22.85% more damage to monsters.",
+    "byStar": [
+     "In combat, back-row Warrior allies deal 5.3% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 5.3% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 7.72% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 10.75% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 16.8% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 22.85% more damage to monsters."
+    ],
+    "starUpgrades": [
+     "Deals 2% more damage to monsters.",
+     "Increases bonus effect to 4%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 10%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30004": [
+   {
+    "slot": 1,
+    "name": "Rocket Launcher",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.2s",
+    "description": "Fires rockets at enemies, dealing damage equal to 201.44% ATK.",
+    "byStar": [
+     "Fires rockets at enemies, dealing damage equal to 41.13% ATK.",
+     "Fires rockets at enemies, dealing damage equal to 49.36% ATK.",
+     "Fires rockets at enemies, dealing damage equal to 67.53% ATK.",
+     "Fires rockets at enemies, dealing damage equal to 93.41% ATK.",
+     "Fires rockets at enemies, dealing damage equal to 133.95% ATK.",
+     "Fires rockets at enemies, dealing damage equal to 201.44% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "White Phosphorus Munition",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.2s",
+    "description": "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 493.6% ATK.",
+    "byStar": [
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 96.89% ATK.",
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 116.27% ATK.",
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 146.92% ATK.",
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 223.81% ATK.",
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 316.4% ATK.",
+     "Shoots white phosphorus rounds at the 2 front enemies, dealing damage equal to 493.6% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Reduces target's DEF by 10% for 6s.",
+     "Bonus damage is increased to 45%.",
+     "Increases bonus effect to 15%.",
+     "Bonus damage is increased to 70%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Disciple",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases ATK by 18.85%.",
+    "byStar": [
+     "In combat, increases ATK by 9.86%.",
+     "In combat, increases ATK by 9.86%.",
+     "In combat, increases ATK by 11.1%.",
+     "In combat, increases ATK by 12.65%.",
+     "In combat, increases ATK by 15.75%.",
+     "In combat, increases ATK by 18.85%."
+    ],
+    "starUpgrades": [
+     "Increases ATK by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30005": [
+   {
+    "slot": 1,
+    "name": "Dual Pistols",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.3s",
+    "description": "Attacks enemies with Dual Pistols, dealing damage equal to 209.19% ATK.",
+    "byStar": [
+     "Attacks enemies with Dual Pistols, dealing damage equal to 41.34% ATK.",
+     "Attacks enemies with Dual Pistols, dealing damage equal to 49.6% ATK.",
+     "Attacks enemies with Dual Pistols, dealing damage equal to 68.4% ATK.",
+     "Attacks enemies with Dual Pistols, dealing damage equal to 95.33% ATK.",
+     "Attacks enemies with Dual Pistols, dealing damage equal to 138.15% ATK.",
+     "Attacks enemies with Dual Pistols, dealing damage equal to 209.19% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Frag Grenade",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.1s",
+    "description": "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 16.1% ATK.",
+    "byStar": [
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 7.11% ATK.",
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 7.11% ATK.",
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 8.35% ATK.",
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 9.9% ATK.",
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 13% ATK.",
+     "Hurls multiple grenades at random enemies 5 times, dealing damage equal to 16.1% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Increases the number of attacks to 7.",
+     "Bonus damage is increased to 45%.",
+     "Increases the number of attacks to 9.",
+     "Bonus damage is increased to 70%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Martial Arts Family",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, deal 33.25% more damage to monsters.",
+    "byStar": [
+     "In combat, deal 9.62% more damage to monsters.",
+     "In combat, deal 9.62% more damage to monsters.",
+     "In combat, deal 12.87% more damage to monsters.",
+     "In combat, deal 16.95% more damage to monsters.",
+     "In combat, deal 25.1% more damage to monsters.",
+     "In combat, deal 33.25% more damage to monsters."
+    ],
+    "starUpgrades": [
+     "Deals 3% more damage to monsters.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30006": [
+   {
+    "slot": 1,
+    "name": "Tactical Sniper Rifle",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.65s",
+    "description": "Attacks enemies with a sniper rifle, dealing damage equal to 485.92% ATK.",
+    "byStar": [
+     "Attacks enemies with a sniper rifle, dealing damage equal to 70.43% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 91.56% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 134.01% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 196.53% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 314.44% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 485.92% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 185%.",
+     "Bonus damage is increased to 270%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Strong Reinforcement",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "10.3s",
+    "description": "Calls in a tank to launch rockets at random enemies 16 times, dealing damage equal to 291.28% ATK.",
+    "byStar": [
+     "Calls in a tank to launch rockets at random enemies 8 times, dealing damage equal to 74.2% ATK.",
+     "Calls in a tank to launch rockets at random enemies 8 times, dealing damage equal to 96.46% ATK.",
+     "Calls in a tank to launch rockets at random enemies 12 times, dealing damage equal to 96.46% ATK.",
+     "Calls in a tank to launch rockets at random enemies 12 times, dealing damage equal to 145.69% ATK.",
+     "Calls in a tank to launch rockets at random enemies 16 times, dealing damage equal to 185.98% ATK.",
+     "Calls in a tank to launch rockets at random enemies 16 times, dealing damage equal to 291.28% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 30% more damage.",
+     "Increases the number of attacks to 12.",
+     "Bonus damage is increased to 75%.",
+     "Increases the number of attacks to 16.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Scout",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Radiation DMG by 30.5%.",
+    "byStar": [
+     "In combat, increases Radiation DMG by 9.7%.",
+     "In combat, increases Radiation DMG by 12.7%.",
+     "In combat, increases Radiation DMG by 16.5%.",
+     "In combat, increases Radiation DMG by 20.5%.",
+     "In combat, increases Radiation DMG by 25.5%.",
+     "In combat, increases Radiation DMG by 30.5%."
+    ],
+    "starUpgrades": [
+     "Increases Radiation DMG by 3%",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30007": [
+   {
+    "slot": 1,
+    "name": "Tactical Grenade",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.75s",
+    "description": "Throws a grenade at enemies, dealing damage equal to 317.9% ATK and reducing their movement speed.",
+    "byStar": [
+     "Throws a grenade at enemies, dealing damage equal to 63.51% ATK and reducing their movement speed.",
+     "Throws a grenade at enemies, dealing damage equal to 76.21% ATK and reducing their movement speed.",
+     "Throws a grenade at enemies, dealing damage equal to 104.81% ATK and reducing their movement speed.",
+     "Throws a grenade at enemies, dealing damage equal to 145.7% ATK and reducing their movement speed.",
+     "Throws a grenade at enemies, dealing damage equal to 210.42% ATK and reducing their movement speed.",
+     "Throws a grenade at enemies, dealing damage equal to 317.9% ATK and reducing their movement speed."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Pincer Tactic",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.2s",
+    "description": "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 295.18% for 6s.",
+    "byStar": [
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 86.61% for 6s.",
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 103.93% for 6s.",
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 117.51% for 6s.",
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 162.51% for 6s.",
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 203.54% for 6s.",
+     "Employs the Pincer Tactic, reducing front-row allies' damage from monsters by 295.18% for 6s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 8 second(s).",
+     "Takes 2% less damage from monsters.",
+     "Increases duration to 9 second(s).",
+     "Increases bonus effect to 4%.",
+     "Increases duration to 10 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Zombie Nemesis",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces damage from monsters by 27.25%.",
+    "byStar": [
+     "In combat, reduces damage from monsters by 9.41%.",
+     "In combat, reduces damage from monsters by 9.41%.",
+     "In combat, reduces damage from monsters by 11.88%.",
+     "In combat, reduces damage from monsters by 14.95%.",
+     "In combat, reduces damage from monsters by 21.1%.",
+     "In combat, reduces damage from monsters by 27.25%."
+    ],
+    "starUpgrades": [
+     "Takes 2% less damage from monsters.",
+     "Increases bonus effect to 4%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 10%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "30011": [
+   {
+    "slot": 1,
+    "name": "Charge Detonator",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.65s",
+    "description": "Hurls a detonator at enemies, dealing damage equal to 508.68% ATK.",
+    "byStar": [
+     "Hurls a detonator at enemies, dealing damage equal to 70.64% ATK.",
+     "Hurls a detonator at enemies, dealing damage equal to 91.83% ATK.",
+     "Hurls a detonator at enemies, dealing damage equal to 135.75% ATK.",
+     "Hurls a detonator at enemies, dealing damage equal to 201.04% ATK.",
+     "Hurls a detonator at enemies, dealing damage equal to 326.13% ATK.",
+     "Hurls a detonator at enemies, dealing damage equal to 508.68% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Bonus damage is increased to 35%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%.",
+     "Bonus damage is increased to 105%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Blast Maniac",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.2s",
+    "description": "Bombards the front 2 enemies with explosives, dealing damage equal to 374.27% ATK.",
+    "byStar": [
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 76.31% ATK.",
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 99.2% ATK.",
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 116.03% ATK.",
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 179.22% ATK.",
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 234.22% ATK.",
+     "Bombards the front 2 enemies with explosives, dealing damage equal to 374.27% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Attacks 1 more target(s), but reduces damage.",
+     "Bonus damage is increased to 30%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Survival Expert",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 5%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "31003": [
+   {
+    "slot": 1,
+    "name": "Enhanced Pulse",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.4s",
+    "description": "Fires pulse bullets at enemies, dealing damage equal to 336.33% ATK.",
+    "byStar": [
+     "Fires pulse bullets at enemies, dealing damage equal to 47.4% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 61.62% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 90.78% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 133.98% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 216.31% ATK.",
+     "Fires pulse bullets at enemies, dealing damage equal to 336.33% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 125%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 275%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Barrage Storm",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.1s",
+    "description": "Unleashes rapid fire at enemies, dealing damage equal to 3032.15% ATK.",
+    "byStar": [
+     "Unleashes rapid fire at enemies, dealing damage equal to 430.9% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 560.17% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 823.65% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 1213.3% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 1953.68% ATK.",
+     "Unleashes rapid fire at enemies, dealing damage equal to 3032.15% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 125%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 275%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Zombie Terminator",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, back-row Warrior allies deal 25.5% more damage to monsters.",
+    "byStar": [
+     "In combat, back-row Warrior allies deal 6.15% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 9.15% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 12.75% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 16.5% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 21% more damage to monsters.",
+     "In combat, back-row Warrior allies deal 25.5% more damage to monsters."
+    ],
+    "starUpgrades": [
+     "Deals 3% more damage to monsters.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "40001": [
+   {
+    "slot": 1,
+    "name": "Nail Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.55s",
+    "description": "Shoots steel spikes at enemies, dealing damage equal to 292.76% ATK.",
+    "byStar": [
+     "Shoots steel spikes at enemies, dealing damage equal to 73.59% ATK.",
+     "Shoots steel spikes at enemies, dealing damage equal to 84.63% ATK.",
+     "Shoots steel spikes at enemies, dealing damage equal to 112.9% ATK.",
+     "Shoots steel spikes at enemies, dealing damage equal to 144.27% ATK.",
+     "Shoots steel spikes at enemies, dealing damage equal to 212.24% ATK.",
+     "Shoots steel spikes at enemies, dealing damage equal to 292.76% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Bonus damage is increased to 35%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%.",
+     "Bonus damage is increased to 105%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Quick Repair",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.3s",
+    "description": "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 653.16% ATK.",
+    "byStar": [
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 190.97% ATK.",
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 219.62% ATK.",
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 248.53% ATK.",
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 334.17% ATK.",
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 465.58% ATK.",
+     "Fires a barrage of spikes at the front 2 enemies with dual pistols, dealing damage equal to 653.16% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Attacks 1 more target(s), but reduces damage.",
+     "Bonus damage is increased to 30%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Survival Expert",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 5%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "40002": [
+   {
+    "slot": 1,
+    "name": "Custom Spray Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "4.2s",
+    "description": "Spews fire at enemies, dealing damage equal to 563.65% ATK.",
+    "byStar": [
+     "Spews fire at enemies, dealing damage equal to 145.09% ATK.",
+     "Spews fire at enemies, dealing damage equal to 166.85% ATK.",
+     "Spews fire at enemies, dealing damage equal to 221.33% ATK.",
+     "Spews fire at enemies, dealing damage equal to 281.29% ATK.",
+     "Spews fire at enemies, dealing damage equal to 410.68% ATK.",
+     "Spews fire at enemies, dealing damage equal to 563.65% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Bonus damage is increased to 35%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%.",
+     "Bonus damage is increased to 105%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "High Pressure Gas Tank",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.2s",
+    "description": "Spews scorching flames at the front 2 enemies, dealing damage equal to 674.56% ATK.",
+    "byStar": [
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 190.87% ATK.",
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 219.5% ATK.",
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 250.37% ATK.",
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 339.2% ATK.",
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 477.54% ATK.",
+     "Spews scorching flames at the front 2 enemies, dealing damage equal to 674.56% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Attacks 1 more target(s), but reduces damage.",
+     "Bonus damage is increased to 30%.",
+     "Bonus damage is increased to 55%.",
+     "Bonus damage is increased to 80%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Survival Expert",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 5%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "40010": [
+   {
+    "slot": 1,
+    "name": "Composite Bow",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.65s",
+    "description": "Shoots arrows at enemies, dealing damage equal to 333.4% ATK.",
+    "byStar": [
+     "Shoots arrows at enemies, dealing damage equal to 63.91% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 76.69% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 106.55% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 149.56% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 218.82% ATK.",
+     "Shoots arrows at enemies, dealing damage equal to 333.4% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 25% more damage.",
+     "Bonus damage is increased to 40%.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 105%.",
+     "Bonus damage is increased to 155%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Heavy Arrow",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "9.3s",
+    "description": "Shoots a heavy arrow at the front enemies, dealing damage equal to 912.42% ATK.",
+    "byStar": [
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 183.83% ATK.",
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 220.59% ATK.",
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 276.46% ATK.",
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 418.45% ATK.",
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 587.23% ATK.",
+     "Shoots a heavy arrow at the front enemies, dealing damage equal to 912.42% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 20% more damage.",
+     "Has a 50% chance to stun the target for 1s.",
+     "Bonus damage is increased to 45%.",
+     "Increases Stun Chance to 100%.",
+     "Bonus damage is increased to 70%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Professional Hunter",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, deal 21.25% more damage to monsters.",
+    "byStar": [
+     "In combat, deal 9.21% more damage to monsters.",
+     "In combat, deal 9.21% more damage to monsters.",
+     "In combat, deal 10.88% more damage to monsters.",
+     "In combat, deal 12.95% more damage to monsters.",
+     "In combat, deal 17.1% more damage to monsters.",
+     "In combat, deal 21.25% more damage to monsters."
+    ],
+    "starUpgrades": [
+     "Deals 3% more damage to monsters.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Wasteland Wanderer",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50001": [
+   {
+    "slot": 1,
+    "name": "Modified Grenade",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Fires a shock grenade at enemies, dealing damage equal to 421.8% ATK.",
+    "byStar": [
+     "Fires a shock grenade at enemies, dealing damage equal to 61.8% ATK.",
+     "Fires a shock grenade at enemies, dealing damage equal to 80.34% ATK.",
+     "Fires a shock grenade at enemies, dealing damage equal to 117.3% ATK.",
+     "Fires a shock grenade at enemies, dealing damage equal to 171.6% ATK.",
+     "Fires a shock grenade at enemies, dealing damage equal to 273.6% ATK.",
+     "Fires a shock grenade at enemies, dealing damage equal to 421.8% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Iron Will",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.3s",
+    "description": "Lets out a motivating shout, increasing front-row allies' DEF by 50.5% for 10s.",
+    "byStar": [
+     "Lets out a motivating shout, increasing front-row allies' DEF by 16% for 6s.",
+     "Lets out a motivating shout, increasing front-row allies' DEF by 26% for 6s.",
+     "Lets out a motivating shout, increasing front-row allies' DEF by 28% for 8s.",
+     "Lets out a motivating shout, increasing front-row allies' DEF by 30.5% for 8s.",
+     "Lets out a motivating shout, increasing front-row allies' DEF by 45.5% for 8s.",
+     "Lets out a motivating shout, increasing front-row allies' DEF by 50.5% for 10s."
+    ],
+    "starUpgrades": [
+     "Increases DEF by 10%.",
+     "Increases duration to 8 second(s).",
+     "Affects all allies.",
+     "Increases bonus effect to 20%.",
+     "Increases duration to 10 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Heavy Armor",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces incoming damage by 30.3%.",
+    "byStar": [
+     "In combat, reduces incoming damage by 6.6%.",
+     "In combat, reduces incoming damage by 9.6%.",
+     "In combat, reduces incoming damage by 13.8%.",
+     "In combat, reduces incoming damage by 18.3%.",
+     "In combat, reduces incoming damage by 24.3%.",
+     "In combat, reduces incoming damage by 30.3%."
+    ],
+    "starUpgrades": [
+     "Reduces damage taken by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50002": [
+   {
+    "slot": 1,
+    "name": "Heavy Revolver",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.35s",
+    "description": "Attacks enemies with a revolver, dealing damage equal to 392.2% ATK.",
+    "byStar": [
+     "Attacks enemies with a revolver, dealing damage equal to 56.7% ATK.",
+     "Attacks enemies with a revolver, dealing damage equal to 73.71% ATK.",
+     "Attacks enemies with a revolver, dealing damage equal to 107.95% ATK.",
+     "Attacks enemies with a revolver, dealing damage equal to 158.4% ATK.",
+     "Attacks enemies with a revolver, dealing damage equal to 253.65% ATK.",
+     "Attacks enemies with a revolver, dealing damage equal to 392.2% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Hawkeye",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "12.3s",
+    "description": "Sends a falcon to scout the battlefield, increasing all allies' ATK by 16.8% for 8s.",
+    "byStar": [
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 6.45% for 6s.",
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 6.45% for 7s.",
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 7.05% for 7s.",
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 10.8% for 7s.",
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 12.3% for 8s.",
+     "Sends a falcon to scout the battlefield, increasing all allies' ATK by 16.8% for 8s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 7 second(s).",
+     "Increases Crit Rate by 10%.",
+     "Increases ATK by 3%.",
+     "Increases duration to 8 second(s).",
+     "Increases ATK Boost to 6%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Sheriff",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Skill Cooldown Speed by 30.3% and reduces damage taken by the ally with the highest ATK by 12.2%.",
+    "byStar": [
+     "In combat, increases Skill Cooldown Speed by 9.5% and reduces damage taken by the ally with the highest ATK by 4.3%.",
+     "In combat, increases Skill Cooldown Speed by 12.5% and reduces damage taken by the ally with the highest ATK by 5.3%.",
+     "In combat, increases Skill Cooldown Speed by 16.3% and reduces damage taken by the ally with the highest ATK by 6.7%.",
+     "In combat, increases Skill Cooldown Speed by 20.3% and reduces damage taken by the ally with the highest ATK by 8.2%.",
+     "In combat, increases Skill Cooldown Speed by 25.3% and reduces damage taken by the ally with the highest ATK by 10.2%.",
+     "In combat, increases Skill Cooldown Speed by 30.3% and reduces damage taken by the ally with the highest ATK by 12.2%."
+    ],
+    "starUpgrades": [
+     "Increases Skill Cooldown by 3% and reduces incoming damage by 1%.",
+     "Increases bonus effect to 6% and 2%.",
+     "Increases bonus effect to 9% and 3%.",
+     "Increases bonus effect to 12% and 4%.",
+     "Increases bonus effect to 15% and 5%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50003": [
+   {
+    "slot": 1,
+    "name": "Stun Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.55s",
+    "description": "Unleashes high-voltage arcs at enemies, dealing damage equal to 448.44% ATK.",
+    "byStar": [
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 63.2% ATK.",
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 82.16% ATK.",
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 121.04% ATK.",
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 178.64% ATK.",
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 288.42% ATK.",
+     "Unleashes high-voltage arcs at enemies, dealing damage equal to 448.44% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Tesla Coil",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.1s",
+    "description": "Unleashes high-voltage arcs at random enemies 5 times, dealing damage equal to 709.5% ATK.",
+    "byStar": [
+     "Unleashes high-voltage arcs at random enemies 3 times, dealing damage equal to 167.5% ATK.",
+     "Unleashes high-voltage arcs at random enemies 3 times, dealing damage equal to 217.75% ATK.",
+     "Unleashes high-voltage arcs at random enemies 4 times, dealing damage equal to 249.08% ATK.",
+     "Unleashes high-voltage arcs at random enemies 4 times, dealing damage equal to 368.22% ATK.",
+     "Unleashes high-voltage arcs at random enemies 5 times, dealing damage equal to 463.25% ATK.",
+     "Unleashes high-voltage arcs at random enemies 5 times, dealing damage equal to 709.5% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Increases the number of attacks to 4.",
+     "Bonus damage is increased to 70%.",
+     "Increases the number of attacks to 5.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Frankenstein",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Crit Rate by 30.3%.",
+    "byStar": [
+     "In combat, increases Crit Rate by 6.6%.",
+     "In combat, increases Crit Rate by 9.6%.",
+     "In combat, increases Crit Rate by 13.8%.",
+     "In combat, increases Crit Rate by 18.3%.",
+     "In combat, increases Crit Rate by 24.3%.",
+     "In combat, increases Crit Rate by 30.3%."
+    ],
+    "starUpgrades": [
+     "Increases Crit Rate by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50004": [
+   {
+    "slot": 1,
+    "name": "Tactical Submachine Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.08s",
+    "description": "Attacks enemies with a submachine gun, dealing damage equal to 317.76% ATK.",
+    "byStar": [
+     "Attacks enemies with a submachine gun, dealing damage equal to 45.28% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 58.86% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 86.5% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 127.34% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 204.86% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 317.76% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Sonic Boom",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.3s",
+    "description": "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 188.1% ATK and reducing their Radiation DMG by 15.3% for 5s.",
+    "byStar": [
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 53.6% ATK and reducing their Radiation DMG by 4.95% for 5s.",
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 69.68% ATK and reducing their Radiation DMG by 4.95% for 5s.",
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 75.4% ATK and reducing their Radiation DMG by 8.55% for 5s.",
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 107.95% ATK and reducing their Radiation DMG by 9.3% for 5s.",
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 126.65% ATK and reducing their Radiation DMG by 13.8% for 5s.",
+     "Throws sonic grenades at all enemies, dealingPhysical DMGequal to 188.1% ATK and reducing their Radiation DMG by 15.3% for 5s."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Reduces Radiation DMG by 3%",
+     "Bonus damage is increased to 70%.",
+     "Increases bonus effect to 6%.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Ion Shield",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces Radiation DMG taken by 40.6%.",
+    "byStar": [
+     "In combat, reduces Radiation DMG taken by 9%.",
+     "In combat, reduces Radiation DMG taken by 13%.",
+     "In combat, reduces Radiation DMG taken by 18.6%.",
+     "In combat, reduces Radiation DMG taken by 24.6%.",
+     "In combat, reduces Radiation DMG taken by 32.6%.",
+     "In combat, reduces Radiation DMG taken by 40.6%."
+    ],
+    "starUpgrades": [
+     "Reduces incoming Radiation DMG by 4%",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 16%.",
+     "Increases bonus effect to 20%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50005": [
+   {
+    "slot": 1,
+    "name": "Light Submachine Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.08s",
+    "description": "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 312.65% ATK.",
+    "byStar": [
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 43.9% ATK.",
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 57.07% ATK.",
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 84.15% ATK.",
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 124.3% ATK.",
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 200.93% ATK.",
+     "ttacks 1 random front enemy with a submachine gun, dealing damage equal to 312.65% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Magnetic Coil",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.1s",
+    "description": "Releases an EM pulse, reducing Radiation DMG taken by all allies by 20.4% for 8s.",
+    "byStar": [
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 10.83% for 5s.",
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 10.83% for 6s.",
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 12.15% for 6s.",
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 13.8% for 7s.",
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 17.1% for 7s.",
+     "Releases an EM pulse, reducing Radiation DMG taken by all allies by 20.4% for 8s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 6 second(s).",
+     "Reduces Radiation DMG taken by 7% for tactical allies",
+     "Increases duration to 7 second(s).",
+     "Increases bonus effect to 15%.",
+     "Increases duration to 8 second(s)."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Magnetic Armor",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, front-row allies take 13.5% less damage and 13.5% less Radiation DMG.",
+    "byStar": [
+     "In combat, front-row allies take 2.7% less damage and 2.7% less Radiation DMG.",
+     "In combat, front-row allies take 4.3% less damage and 4.3% less Radiation DMG.",
+     "In combat, front-row allies take 6.2% less damage and 6.2% less Radiation DMG.",
+     "In combat, front-row allies take 8.2% less damage and 8.2% less Radiation DMG.",
+     "In combat, front-row allies take 10.8% less damage and 10.8% less Radiation DMG.",
+     "In combat, front-row allies take 13.5% less damage and 13.5% less Radiation DMG."
+    ],
+    "starUpgrades": [
+     "Reduces damage taken by 1.5%.",
+     "Increases bonus effect to 3%.",
+     "Increases bonus effect to 4.5%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 7.5%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50006": [
+   {
+    "slot": 1,
+    "name": "Rapid-Fire Sniper Rifle",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Attacks enemies with a sniper rifle, dealing damage equal to 419.64% ATK.",
+    "byStar": [
+     "Attacks enemies with a sniper rifle, dealing damage equal to 61.21% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 79.58% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 116.31% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 170.31% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 271.93% ATK.",
+     "Attacks enemies with a sniper rifle, dealing damage equal to 419.64% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Black Hawk Call",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.2s",
+    "description": "Calls an armed helicopter to attack all enemies, dealing damage equal to 737.43% ATK.",
+    "byStar": [
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 106.51% ATK.",
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 138.46% ATK.",
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 202.82% ATK.",
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 297.67% ATK.",
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 476.82% ATK.",
+     "Calls an armed helicopter to attack all enemies, dealing damage equal to 737.43% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 185%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Box Breathing",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Crit Rate by 30.3%.",
+    "byStar": [
+     "In combat, increases Crit Rate by 9.5%.",
+     "In combat, increases Crit Rate by 12.5%.",
+     "In combat, increases Crit Rate by 16.3%.",
+     "In combat, increases Crit Rate by 20.3%.",
+     "In combat, increases Crit Rate by 25.3%.",
+     "In combat, increases Crit Rate by 30.3%."
+    ],
+    "starUpgrades": [
+     "Increases Crit Rate by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50007": [
+   {
+    "slot": 1,
+    "name": "Powered Submachine Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.08s",
+    "description": "Attacks enemies with a submachine gun, dealing damage equal to 313.02% ATK.",
+    "byStar": [
+     "Attacks enemies with a submachine gun, dealing damage equal to 44% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 57.2% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 84.32% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 124.52% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 201.21% ATK.",
+     "Attacks enemies with a submachine gun, dealing damage equal to 313.02% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Suicide Robot",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10s",
+    "description": "Controls a self-destruct spider robot that attacks 3 back-row enemy, dealing damage equal to 934.12% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+    "byStar": [
+     "Controls a self-destruct spider robot that attacks 1 back-row enemy, dealing damage equal to 355.6% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+     "Controls a self-destruct spider robot that attacks 1 back-row enemy, dealing damage equal to 480.06% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+     "Controls a self-destruct spider robot that attacks 2 back-row enemy, dealing damage equal to 360.72% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+     "Controls a self-destruct spider robot that attacks 2 back-row enemy, dealing damage equal to 514.59% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+     "Controls a self-destruct spider robot that attacks 3 back-row enemy, dealing damage equal to 601.12% ATK, with a 20% chance to inflict [Stun] on the target for 2s.",
+     "Controls a self-destruct spider robot that attacks 3 back-row enemy, dealing damage equal to 934.12% ATK, with a 20% chance to inflict [Stun] on the target for 2s."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Attacks 1 more target(s).",
+     "Bonus damage is increased to 70%.",
+     "Increases the number of attack targets to 3.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Overload",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases ATK by 40.5%.",
+    "byStar": [
+     "In combat, increases ATK by 11.8%.",
+     "In combat, increases ATK by 15.8%.",
+     "In combat, increases ATK by 21%.",
+     "In combat, increases ATK by 26.5%.",
+     "In combat, increases ATK by 33.5%.",
+     "In combat, increases ATK by 40.5%."
+    ],
+    "starUpgrades": [
+     "Increases ATK by 4%.",
+     "Increases bonus effect to 8%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 16%.",
+     "Increases bonus effect to 20%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50008": [
+   {
+    "slot": 1,
+    "name": "Gatling Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.08s",
+    "description": "Attack enemies with a machine gun, dealing damage equal to 311.17% ATK.",
+    "byStar": [
+     "Attack enemies with a machine gun, dealing damage equal to 43.5% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 56.55% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 83.47% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 123.42% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 199.79% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 311.17% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Viper",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10s",
+    "description": "Fires neurotoxin rounds at random enemies 20 times, dealing damage equal to 194.7% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+    "byStar": [
+     "Fires neurotoxin rounds at random enemies 10 times, dealing damage equal to 47.2% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+     "Fires neurotoxin rounds at random enemies 10 times, dealing damage equal to 61.36% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+     "Fires neurotoxin rounds at random enemies 15 times, dealing damage equal to 70.2% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+     "Fires neurotoxin rounds at random enemies 15 times, dealing damage equal to 106.25% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+     "Fires neurotoxin rounds at random enemies 20 times, dealing damage equal to 121.55% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s.",
+     "Fires neurotoxin rounds at random enemies 20 times, dealing damage equal to 194.7% ATK and reducing their DEF by 5% (up to 25%) per hit for 9s."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Increases the number of attacks to 15.",
+     "Bonus damage is increased to 70%.",
+     "Increases the number of attacks to 20.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "War Machine",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Physical DMG by 30.2%.",
+    "byStar": [
+     "In combat, increases Physical DMG by 9.4%.",
+     "In combat, increases Physical DMG by 12.4%.",
+     "In combat, increases Physical DMG by 16.2%.",
+     "In combat, increases Physical DMG by 20.2%.",
+     "In combat, increases Physical DMG by 25.2%.",
+     "In combat, increases Physical DMG by 30.2%."
+    ],
+    "starUpgrades": [
+     "Increases Physical DMG by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50009": [
+   {
+    "slot": 1,
+    "name": "Pulse Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.08s",
+    "description": "Attacks 1 random enemy with dual pistols, dealing damage equal to 311.91% ATK.",
+    "byStar": [
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 43.7% ATK.",
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 56.81% ATK.",
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 83.81% ATK.",
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 123.86% ATK.",
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 200.36% ATK.",
+     "Attacks 1 random enemy with dual pistols, dealing damage equal to 311.91% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Portable Sentry",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10s",
+    "description": "Activates the Portable Sentry: enter [Guard] state for 8.8s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+    "byStar": [
+     "Activates the Portable Sentry: enter [Guard] state for 5.06s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+     "Activates the Portable Sentry: enter [Guard] state for 6.06s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+     "Activates the Portable Sentry: enter [Guard] state for 6.3s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+     "Activates the Portable Sentry: enter [Guard] state for 7.6s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+     "Activates the Portable Sentry: enter [Guard] state for 8.2s. Automatically counterattacks when hit, with a minimum interval of 1s.",
+     "Activates the Portable Sentry: enter [Guard] state for 8.8s. Automatically counterattacks when hit, with a minimum interval of 1s."
+    ],
+    "starUpgrades": [
+     "Increases duration to 6 second(s).",
+     "Deals 15% more Retaliation DMG.",
+     "Increases duration to 7 second(s).",
+     "Affects front-row allies.",
+     "Bonus damage is increased to 30%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Sentinel",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces front-row allies' incoming damage by 13.2%. While in [Guard] state, Assault Heroes gain double the effect.",
+    "byStar": [
+     "In combat, reduces front-row allies' incoming damage by 2.8%. While in [Guard] state, Assault Heroes gain double the effect.",
+     "In combat, reduces front-row allies' incoming damage by 4.3%. While in [Guard] state, Assault Heroes gain double the effect.",
+     "In combat, reduces front-row allies' incoming damage by 6.2%. While in [Guard] state, Assault Heroes gain double the effect.",
+     "In combat, reduces front-row allies' incoming damage by 8.2%. While in [Guard] state, Assault Heroes gain double the effect.",
+     "In combat, reduces front-row allies' incoming damage by 10.7%. While in [Guard] state, Assault Heroes gain double the effect.",
+     "In combat, reduces front-row allies' incoming damage by 13.2%. While in [Guard] state, Assault Heroes gain double the effect."
+    ],
+    "starUpgrades": [
+     "Reduces damage taken by 1.5%.",
+     "Increases bonus effect to 3%.",
+     "Increases bonus effect to 4.5%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 7.5%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50010": [
+   {
+    "slot": 1,
+    "name": "Heavy Machine Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Attack enemies with a machine gun, dealing damage equal to 412.55% ATK.",
+    "byStar": [
+     "Attack enemies with a machine gun, dealing damage equal to 59.3% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 77.09% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 113.05% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 166.1% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 266.47% ATK.",
+     "Attack enemies with a machine gun, dealing damage equal to 412.55% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Glaring Taunt",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10s",
+    "description": "Flashes a blinding light, drawing aggro from the 4 front-row enemies and reducing their ATK by 16.8% for 8s.",
+    "byStar": [
+     "Flashes a blinding light, drawing aggro from the 2 front-row enemies and reducing their ATK by 6.45% for 8s.",
+     "Flashes a blinding light, drawing aggro from the 2 front-row enemies and reducing their ATK by 8.45% for 8s.",
+     "Flashes a blinding light, drawing aggro from the 3 front-row enemies and reducing their ATK by 9.05% for 8s.",
+     "Flashes a blinding light, drawing aggro from the 3 front-row enemies and reducing their ATK by 11.8% for 8s.",
+     "Flashes a blinding light, drawing aggro from the 4 front-row enemies and reducing their ATK by 13.3% for 8s.",
+     "Flashes a blinding light, drawing aggro from the 4 front-row enemies and reducing their ATK by 16.8% for 8s."
+    ],
+    "starUpgrades": [
+     "Reduces ATK by 2%.",
+     "Increases the number of taunt targets to 3.",
+     "Increases bonus effect to 4%.",
+     "Increases the number of taunt targets to 4.",
+     "Increases bonus effect to 6%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Mountain Ranger",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, reduces incoming damage by 30.3%.",
+    "byStar": [
+     "In combat, reduces incoming damage by 6.6%.",
+     "In combat, reduces incoming damage by 9.6%.",
+     "In combat, reduces incoming damage by 13.8%.",
+     "In combat, reduces incoming damage by 18.3%.",
+     "In combat, reduces incoming damage by 24.3%.",
+     "In combat, reduces incoming damage by 30.3%."
+    ],
+    "starUpgrades": [
+     "Reduces damage taken by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50011": [
+   {
+    "slot": 1,
+    "name": "Electromagnetic Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Fires electric bullets, dealing damage equal to 419.64% ATK.",
+    "byStar": [
+     "Fires electric bullets, dealing damage equal to 61.21% ATK.",
+     "Fires electric bullets, dealing damage equal to 79.58% ATK.",
+     "Fires electric bullets, dealing damage equal to 116.31% ATK.",
+     "Fires electric bullets, dealing damage equal to 170.31% ATK.",
+     "Fires electric bullets, dealing damage equal to 271.93% ATK.",
+     "Fires electric bullets, dealing damage equal to 419.64% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Condensed Plasma",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.1s",
+    "description": "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 1157.47% ATK.",
+    "byStar": [
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 167.83% ATK.",
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 218.18% ATK.",
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 319.31% ATK.",
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 468.23% ATK.",
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 749.07% ATK.",
+     "Fires large spherical lightning continuously at the 3 back enemies, dealing damage equal to 1157.47% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 70%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Torture Specialist",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Radiation DMG by 30.3%.",
+    "byStar": [
+     "In combat, increases Radiation DMG by 9.5%.",
+     "In combat, increases Radiation DMG by 12.5%.",
+     "In combat, increases Radiation DMG by 16.3%.",
+     "In combat, increases Radiation DMG by 20.3%.",
+     "In combat, increases Radiation DMG by 25.3%.",
+     "In combat, increases Radiation DMG by 30.3%."
+    ],
+    "starUpgrades": [
+     "Increases Radiation DMG by 3%",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50012": [
+   {
+    "slot": 1,
+    "name": "Cartridge Submachine Gun",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 419.64% ATK.",
+    "byStar": [
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 61.21% ATK.",
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 79.58% ATK.",
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 116.31% ATK.",
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 170.31% ATK.",
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 271.93% ATK.",
+     "Attacks the enemy with the lowest HP percentage with an SMG, dealing damage equal to 419.64% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Clockwork Blade",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10.3s",
+    "description": "Tosses blades at random enemies 3 times, dealing damage equal to 797.5% ATK.",
+    "byStar": [
+     "Tosses blades at random enemies 3 times, dealing damage equal to 167.23% ATK.",
+     "Tosses blades at random enemies 3 times, dealing damage equal to 217.4% ATK.",
+     "Tosses blades at random enemies 3 times, dealing damage equal to 251.97% ATK.",
+     "Tosses blades at random enemies 3 times, dealing damage equal to 371.99% ATK.",
+     "Tosses blades at random enemies 3 times, dealing damage equal to 531.25% ATK.",
+     "Tosses blades at random enemies 3 times, dealing damage equal to 797.5% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Increases ATK by 5% (with no stack limit) until the battle ends.",
+     "Bonus damage is increased to 70%.",
+     "Increases ATK by 10% (with no stack limit) until the battle ends.",
+     "Bonus damage is increased to 120%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Mechanic",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "In combat, increases Crit Rate by 30.3%.",
+    "byStar": [
+     "In combat, increases Crit Rate by 9.5%.",
+     "In combat, increases Crit Rate by 12.5%.",
+     "In combat, increases Crit Rate by 16.3%.",
+     "In combat, increases Crit Rate by 20.3%.",
+     "In combat, increases Crit Rate by 25.3%.",
+     "In combat, increases Crit Rate by 30.3%."
+    ],
+    "starUpgrades": [
+     "Increases bonus effect to 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ],
+  "50013": [
+   {
+    "slot": 1,
+    "name": "Heavy Pulse Grenade Launcher",
+    "type": "Auto Attack",
+    "unlock": "Hero Lv. 1",
+    "cooldown": "1.45s",
+    "description": "Fires grenades at enemies, dealing damage equal to 413.66% ATK.",
+    "byStar": [
+     "Fires grenades at enemies, dealing damage equal to 59.6% ATK.",
+     "Fires grenades at enemies, dealing damage equal to 77.48% ATK.",
+     "Fires grenades at enemies, dealing damage equal to 113.56% ATK.",
+     "Fires grenades at enemies, dealing damage equal to 166.76% ATK.",
+     "Fires grenades at enemies, dealing damage equal to 267.33% ATK.",
+     "Fires grenades at enemies, dealing damage equal to 413.66% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 2,
+    "name": "Fine Firepower Net",
+    "type": "Battle Skills",
+    "unlock": "Hero Lv. 5",
+    "cooldown": "10s",
+    "description": "Fires multiple grenades at all enemies, dealing damage equal to 715.95% ATK.",
+    "byStar": [
+     "Fires multiple grenades at all enemies, dealing damage equal to 100.7% ATK.",
+     "Fires multiple grenades at all enemies, dealing damage equal to 130.91% ATK.",
+     "Fires multiple grenades at all enemies, dealing damage equal to 192.95% ATK.",
+     "Fires multiple grenades at all enemies, dealing damage equal to 284.9% ATK.",
+     "Fires multiple grenades at all enemies, dealing damage equal to 460.28% ATK.",
+     "Fires multiple grenades at all enemies, dealing damage equal to 715.95% ATK."
+    ],
+    "starUpgrades": [
+     "Deals 35% more damage.",
+     "Bonus damage is increased to 75%.",
+     "Bonus damage is increased to 130%.",
+     "Bonus damage is increased to 190%.",
+     "Bonus damage is increased to 265%."
+    ]
+   },
+   {
+    "slot": 3,
+    "name": "Actuary",
+    "type": "Passive",
+    "unlock": "Hero Lv. 21",
+    "cooldown": "Passive",
+    "description": "During battle, own Physical DMG increases by 30.3%.",
+    "byStar": [
+     "During battle, own Physical DMG increases by 9.5%.",
+     "During battle, own Physical DMG increases by 12.5%.",
+     "During battle, own Physical DMG increases by 16.3%.",
+     "During battle, own Physical DMG increases by 20.3%.",
+     "During battle, own Physical DMG increases by 25.3%.",
+     "During battle, own Physical DMG increases by 30.3%."
+    ],
+    "starUpgrades": [
+     "Increases Physical DMG by 3%.",
+     "Increases bonus effect to 6%.",
+     "Increases bonus effect to 9%.",
+     "Increases bonus effect to 12%.",
+     "Increases bonus effect to 15%."
+    ]
+   },
+   {
+    "slot": 4,
+    "name": "Doomsday Judgment",
+    "type": "Specialty",
+    "unlock": "Hero Lv. 31 · 4★",
+    "cooldown": "Passive",
+    "description": "Increases ATK, DEF, and HP by 20%. Increases Skill Cooldown Speed by 10%.",
+    "byStar": [],
+    "starUpgrades": []
+   }
+  ]
+ }
+}

@@ -143,3 +143,27 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .target-cost{display:flex;flex-wrap:wrap;gap:6px;font-size:7px;color:#aeb9b3}.target-cost span{background:#0b120f;padding:5px 7px}.target-cost b{font:700 13px var(--display);color:#fff;margin-right:3px}
 .delete-target{width:34px;height:34px;border:1px solid #4a2b25;background:#1b1210;color:#e0836c;cursor:pointer;font-size:14px}.delete-target:hover{background:#2a1714}
 @media(max-width:760px){.target-list article{grid-template-columns:1fr auto}.target-cost{grid-column:1/-1;grid-row:2}}
+/* Rarity colors: SR blue, SSR purple, UR gold */
+.rarity.SR{background:#1d3a55;color:#8cc8ff}.rarity.SSR{background:#3a2a5c;color:#d2b8ff}.rarity.UR{background:#5a4320;color:#ffd077}
+.hero-card[data-rarity=SR] .hero-portrait{border-bottom-color:#4a9be0}.hero-card[data-rarity=SSR] .hero-portrait{border-bottom-color:#9b6cf0}.hero-card[data-rarity=UR] .hero-portrait{border-bottom-color:var(--gold)}
+.hero-card[data-rarity=SR]{border-top:2px solid #2d5f8c}.hero-card[data-rarity=SSR]{border-top:2px solid #5e3fa0}.hero-card[data-rarity=UR]{border-top:2px solid #8a6a2a}
+/* Hero management */
+.hero-manage .hero-details{display:flex;flex-direction:column;gap:12px}
+.manage-block{background:#0d1312;border:1px solid #222b28;padding:12px 14px}
+.manage-block>h4{display:flex;align-items:center;gap:10px;margin:0 0 10px;color:#84908a;font:600 9px var(--body);letter-spacing:1px}
+.step-count{color:#fff;font:700 15px var(--display);letter-spacing:0}
+.level-pair{display:grid;grid-template-columns:minmax(130px,170px) 1fr;gap:12px;align-items:stretch;margin-top:8px}
+.now-input{display:grid;gap:5px;align-content:start;background:#121c19;border-left:3px solid var(--green);padding:8px 10px;color:#a6c957;font-size:8px;letter-spacing:1px}
+.hero-details .now-input input[type=number]{width:100%;font:700 24px var(--display);padding:8px 10px;background:#07100c;border:1px solid #3a5230;color:#fff}
+.now-input small{color:#7d8983;font-size:9px;letter-spacing:0}
+.level-pair .target-plan{display:grid;gap:5px;align-content:start;background:#1a1610;border-left:3px solid var(--gold);padding:8px 10px;margin:0}
+.level-pair .target-plan>label{display:grid;gap:5px;color:var(--gold);font-size:8px;letter-spacing:1px}
+.hero-details .level-pair .target-level{width:100%;max-width:150px;font:700 24px var(--display);padding:8px 10px;background:#120e07;border:1px dashed #8a6a2a;color:#ffd98a}
+.skill-quads{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.skill-quad{background:#111a17;border:1px solid #26302d;padding:10px;display:flex;flex-direction:column;gap:6px}
+.skill-quad>header{display:flex;gap:10px;align-items:center}.skill-quad>header b{display:block;font:600 16px var(--display);color:#fff}.skill-quad>header small{color:#84908a;font-size:8px}
+.skill-quad .skill-icon{width:40px;height:40px}
+.skill-effect{font-size:10px;color:#cfd6d2;line-height:1.4;margin:0}.skill-effect i{color:#6f7b75;font-size:8px}
+.skill-next{font-size:9px;color:var(--gold);margin:0}.skill-fixed{font-size:9px;color:#6f7b75;margin:auto 0 0}
+.skill-quad .level-pair{grid-template-columns:1fr 1.4fr;margin-top:auto}
+@media(max-width:900px){.skill-quads{grid-template-columns:1fr}.level-pair{grid-template-columns:1fr}}

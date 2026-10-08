@@ -252,7 +252,7 @@ def build_fighter(raw):
             'componentCost': component_cost, 'evolutionXp': evolution[:-1]}
 
 
-def build_heroes(heroes_raw):
+def build_heroes(heroes_raw, skill_info):
     heroes, seen = [], set()
     for raw in heroes_raw['playable_heroes']:
         rarity = RARITY[raw['quality']]
@@ -260,6 +260,7 @@ def build_heroes(heroes_raw):
         if key in seen:  # the export lists Nora twice with identical stats
             continue
         seen.add(key)
+        skills = skill_info['heroes'].get(str(raw['id']), [])
         heroes.append({
             'id': key,
             'gameId': raw['id'],
@@ -272,10 +273,13 @@ def build_heroes(heroes_raw):
             'expCurve': str(raw['level_curve_id']),
             'skillCurve': str(raw['quality']),
             'icon': icon('heroes', raw['id']),
-            'skillIcons': [icon('skills', f"{raw['id']}_{slot}") for slot in (1, 2, 3)],
+            'skillIcons': [icon('skills', f"{raw['id']}_{slot}") for slot in (1, 2, 3, 4)],
+            # Specialty skills stay at level 1; only the others take skill books.
+            'levelSkills': [skill['slot'] for skill in skills if skill['type'] != 'Specialty'] or [1, 2, 3],
+            'skills': skills,
         })
     class_order = ['Warrior', 'Assault', 'Tactical']
-    rarity_order = ['SR', 'SSR', 'UR']
+    rarity_order = ['UR', 'SSR', 'SR']  # highest rarity first
     heroes.sort(key=lambda hero: (class_order.index(hero['heroClass']), rarity_order.index(hero['rarity']), hero['gameId']))
 
     exp_curves = {
@@ -301,7 +305,7 @@ def main():
     equipment = load('equipment.json')
     fighter = load('fighter.json')
     trees, research = build_research(progression, load('research_layout.json'))
-    heroes, exp_curves, skill_curves, star_shards, promoted_shards, skill_limits = build_heroes(heroes_raw)
+    heroes, exp_curves, skill_curves, star_shards, promoted_shards, skill_limits = build_heroes(heroes_raw, load('hero_skills.json'))
     modifiers = progression['construction_modifiers']
     data = {
         'version': 1,

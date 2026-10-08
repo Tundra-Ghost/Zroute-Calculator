@@ -55,6 +55,7 @@ const equipmentSlots = ['Rifle', 'Scope', 'Helmet', 'Bullet Proof Vest'];
 const equipmentQualities = ['None', 'R / Green', 'SR / Blue', 'SSR / Purple', 'UR / Gold'];
 const starShardCosts = GAME.starShards.length ? GAME.starShards : [5, 5, 5, 5, 5, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 60, 60, 60, 60, 60, 100, 100, 100, 100, 100];
 const skillSlots = [1, 2, 3];
+const heroSkillSlots = hero => hero?.levelSkills || skillSlots;
 const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
 const survivorRarities = ['Other', 'SSR', 'Mythic'];
 // Observation records keep their original fields. Plan totals use the wider list.
@@ -254,6 +255,14 @@ function heroProgress(hero) {
 }
 function gearLevel(progress, slot, table) { return Math.min(table.steps, Number(progress.equipLevels?.[slot]) || 0); }
 function shardsUsed(steps) { return sumRange(starShardCosts, 0, steps); }
+// Shards a hero has put into stars. A promoted hero counts from its 3 ★ start.
+function heroShardTable(hero) { return hero.promoted && GAME.starShardsPromoted?.length ? GAME.starShardsPromoted : starShardCosts; }
+function heroShards(hero, steps) { return sumRange(heroShardTable(hero), hero.promoted ? 15 : 0, steps); }
+function stepsFromShards(hero, shards) {
+  const table = heroShardTable(hero); let steps = hero.promoted ? 15 : 0; let left = shards;
+  while (steps < 25 && left >= table[steps]) { left -= table[steps]; steps += 1; }
+  return steps;
+}
 function skillCap(steps) { return GAME.starSkillLimit[steps] || 1; }
 
 function sumPower(names) { return names.reduce((sum, name) => sum + (Number(state.profile.power[name]) || 0), 0); }
@@ -289,7 +298,7 @@ function upgradeItems(category) {
   if (category === 'alliance') items = Object.entries(allianceBranches).flatMap(([branch, branchItems]) => branchItems.map(item => ({ value: item, label: `${branch} · ${item}` })));
   if (category === 'hero-level' || category === 'hero-star') items = heroes.map(item => ({ value: item.id, label: heroLabel(item) }));
   if (category === 'hero-gear') items = heroes.filter(hasGear).map(item => ({ value: item.id, label: `${heroLabel(item)} · Exclusive weapon` }));
-  if (category === 'hero-skill') items = heroes.flatMap(item => skillSlots.map(slot => ({ value: `${item.id}|${slot}`, label: `${heroLabel(item)} · Skill ${slot}` })));
+  if (category === 'hero-skill') items = heroes.flatMap(item => heroSkillSlots(item).map(slot => ({ value: `${item.id}|${slot}`, label: `${heroLabel(item)} · Skill ${slot}` })));
   if (category === 'hero-equip') items = heroes.flatMap(item => equipmentSlots.map(slot => ({ value: `${item.id}|${slot}`, label: `${heroLabel(item)} · ${slot}` })));
   if (category === 'survivor-star') items = state.survivors.map(item => ({ value: item.id, label: `${item.name} · ${item.rarity}` }));
   const existingItems = state.upgradeRecords
@@ -382,7 +391,7 @@ function planObjectives() {
       return [
         objective('hero-level', item.id, level, item.maxLevel),
         objective('hero-star', item.id, stars, 25),
-        ...skillSlots.map(slot => objective('hero-skill', `${item.id}|${slot}`, owned ? Number(progress.skills[slot]) || 1 : 0, GAME.skillBooks[item.skillCurve]?.length || 30)),
+        ...heroSkillSlots(item).map(slot => objective('hero-skill', `${item.id}|${slot}`, owned ? Number(progress.skills[slot]) || 1 : 0, GAME.skillBooks[item.skillCurve]?.length || 30)),
         ...(hasGear(item) ? [objective('hero-gear', item.id, owned ? Number(progress.gear) || 0 : 0, gearMax())] : []),
         ...(owned ? equipmentSlots.flatMap(slot => {
           const table = gearByQuality.get(progress.equipment[slot]);
@@ -437,7 +446,7 @@ function maxOptionsForm() {
   </form><small>Only changes this "Everything to max" total. Enter the minister bonus your capitol appointment gives.</small></details>`;
 }
 function totalValues(plan) {
-  return `<div class="grand-plan-values">${shownResources(plan.resources).map(name => `<article><span>${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('')}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.seconds)}</strong></article></div>`;
+  return `<div class="grand-plan-values">${shownResources(plan.resources).map(name => `<article><span>${iconImg(GAME.resourceIcons?.[name], 'chip-icon')}${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('')}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.seconds)}</strong></article></div>`;
 }
 function grandPlanMarkup() {
   const plan = grandUpgradePlan();
@@ -858,13 +867,22 @@ function heroCard(item, index, cap) {
   const stars = (progress.starSteps / 5).toFixed(1).replace('.0', '');
   const limit = skillCap(progress.starSteps);
   const skillMax = GAME.skillBooks[item.skillCurve]?.length || 30;
-  const skills = skillSlots.map(slot => {
+  const wholeStars = Math.floor(progress.starSteps / 5);
+  const info = item.skills?.length ? item.skills : skillSlots.map(slot => ({ slot, name: `Skill ${slot}` }));
+  const skills = info.map(skill => {
+    const slot = skill.slot; const levelable = heroSkillSlots(item).includes(slot);
     const level = Math.min(limit, Number(progress.skills[slot]) || 1);
-    return `<div class="skill-row">${iconImg(item.skillIcons?.[slot - 1], 'skill-icon')}<label>SKILL ${slot}<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>`;
+    const effect = skill.byStar?.[wholeStars] || skill.description || '';
+    const nextStar = skill.starUpgrades?.[wholeStars];
+    return `<div class="skill-quad"><header>${iconImg(item.skillIcons?.[slot - 1], 'skill-icon')}<div><b>${escapeHtml(skill.name)}</b><small>${escapeHtml([skill.type, skill.cooldown && skill.cooldown !== 'Passive' ? `CD ${skill.cooldown}` : '', skill.unlock].filter(Boolean).join(' · '))}</small></div></header>
+      ${effect ? `<p class="skill-effect">${escapeHtml(effect)}${skill.byStar?.length ? ` <i>(at ${wholeStars} ★ max level)</i>` : ''}</p>` : ''}
+      ${nextStar ? `<p class="skill-next">Next star: ${escapeHtml(nextStar)}</p>` : ''}
+      ${levelable ? `<div class="level-pair"><label class="now-input">LEVEL<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"><small>cap ${limit}</small></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>` : '<p class="skill-fixed">Fixed skill. No skill books needed.</p>'}</div>`;
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>${promotionNote(item, owned, progress)}
-    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${skillSlots.map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary><div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div></details>`:''}
+    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary><div class="hero-details"><section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section>
+      <section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="equipment">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section><section class="manage-block skills"><h4>SKILLS · LEVEL CAP ${limit} AT ${stars} ★</h4><div class="skill-quads">${skills}</div></section>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div></details>`:''}
   </article>`;
 }
 
@@ -969,6 +987,12 @@ function bindPageControls() {
     const progress = heroProgress({ id: input.dataset.id });
     progress.level = Math.max(1, Math.min(Number(input.max), Number(input.value) || 1));
     state.heroProgress[input.dataset.id] = progress; save(); renderRoute({ keepScroll: true });
+  }));
+  document.querySelectorAll('.hero-shards').forEach(input => input.addEventListener('change', () => {
+    const hero = heroes.find(item => item.id === input.dataset.id); if (!hero) return;
+    const progress = heroProgress(hero);
+    progress.starSteps = stepsFromShards(hero, Math.max(0, Number(input.value) || 0));
+    state.heroProgress[hero.id] = progress; save('Stars saved'); renderRoute({ keepScroll: true });
   }));
   document.querySelectorAll('.hero-gear').forEach(input => input.addEventListener('change', () => {
     const progress = heroProgress({ id: input.dataset.id });
