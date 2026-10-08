@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compact the raw game JSON exports into one small file the app can load.
 
-Reads data/source/progression.json, heroes.json, resources.json and
-equipment.json and writes
+Reads data/source/progression.json, heroes.json, resources.json,
+equipment.json and fighter.json and writes
 data/game-data.js. Run it again whenever the source files change:
 
     python3 tools/build_game_data.py
@@ -31,8 +31,11 @@ RESOURCE_LABELS = {
     'food': 'Food', 'metal': 'Metal', 'oil': 'Oil', 'uranium': 'Uranium', 'antibody': 'Antibody',
     'researchData': 'Research Data', 'heroExp': 'Hero EXP', 'shards': 'Hero Shards', 'skillBooks': 'Skill Books',
     'refiningStone': 'Refining Stone', 'heatGold': 'Heat-resistant Gold', 'composite': 'Composite Material',
-    'crystal': 'Conductive Crystal', 'blueprintLegendary': 'Legendary Blueprint', 'blueprintMythic': 'Mythic Blueprint'
+    'crystal': 'Conductive Crystal', 'blueprintLegendary': 'Legendary Blueprint', 'blueprintMythic': 'Mythic Blueprint',
+    'combatChips': 'Combat Chips', 'fighterParts': 'Fighter Parts', 'chipCopies': 'Wingman Chip Copies'
 }
+FIGHTER_ITEMS = {'item_drone_data': 'combatChips', 'item_drone_part': 'fighterParts'}
+CHIP_SLOTS = ['Debut', 'Attack', 'Support', 'Defense']
 GROUPS = {1: 'Economy', 2: 'Military', 4: 'Development', 5: 'Season'}
 RENAMES = {1001: 'HQ'}
 RARITY = {3: 'SR', 4: 'SSR', 5: 'UR'}
@@ -182,6 +185,26 @@ def build_gear(equipment):
     return [gear[quality] for quality in sorted(gear)]
 
 
+def build_fighter(raw):
+    """Fighter level rows and wingman chip star costs.
+
+    Rows are (level, phase). Phase 1-5 rows are the key upgrade stages the game
+    shows as stage phase - 1 of 5. cost[key][r] is the cost of leaving row r
+    (index 0 is unused), assuming no bonus progress.
+    """
+    rows = sorted(raw['levels'], key=lambda row: row['id'])
+    cost = {key: [0] * (len(rows) + 1) for key in FIGHTER_ITEMS.values()}
+    for row in rows:
+        clicks = -(-row['progressTotal'] // row['progressAdd']) if row['progressAdd'] > 0 else 0
+        for item in row['cost']:
+            cost[FIGHTER_ITEMS[item['id']]][row['id']] += abs(item['count']) * clicks
+    chips = [{
+        'id': int(chip_id), 'name': chip['name'], 'quality': chip['quality'], 'slot': chip['slot'],
+        'copies': [chip['stars'][str(star)]['copies'] for star in range(len(chip['stars']) - 1)],
+    } for chip_id, chip in sorted(raw['modules'].items(), key=lambda item: int(item[0]))]
+    return {'rows': [[row['level'], row['phase']] for row in rows], 'cost': cost, 'chips': chips, 'chipSlots': CHIP_SLOTS}
+
+
 def build_heroes(heroes_raw):
     heroes, seen = [], set()
     for raw in heroes_raw['playable_heroes']:
@@ -225,6 +248,7 @@ def main():
     heroes_raw = load('heroes.json')
     resources = load('resources.json')
     equipment = load('equipment.json')
+    fighter = load('fighter.json')
     trees, research = build_research(progression)
     heroes, exp_curves, skill_curves, star_shards, skill_limits = build_heroes(heroes_raw)
     modifiers = progression['construction_modifiers']
@@ -250,6 +274,7 @@ def main():
         # Gear level L costs gearShards[L - 1] exclusive weapon shards to reach L + 1.
         'exclusiveGear': {str(gear['hero_id']): {'heroName': gear['hero_name']} for gear in heroes_raw['exclusive_gear']},
         'gear': build_gear(equipment),
+        'fighter': build_fighter(fighter),
         'gearShards': [step['fragment_count'] for step in sorted(heroes_raw['exclusive_gear_level_curve'], key=lambda step: step['id'])],
     }
     body = json.dumps(data, separators=(',', ':'), ensure_ascii=False)

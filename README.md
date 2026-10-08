@@ -12,11 +12,13 @@ The **Resources** page shows hourly output from your producer buildings and outp
 
 Each hero gear slot (SR, SSR or UR) has a level and a target. UR gear continues past level 40 into 25 promotion stages. The Resources page also lists crafting and upgrade costs per gear quality.
 
+The **Fighter** page tracks fighter level and stage (Combat Chips and Fighter Parts) and wingman chip stars (chip copies). Components and evolution are not tracked yet.
+
 Alliance research and survivors are not in the game data yet. Those still use observations you record on the **Upgrade data** tab. Records live in browser storage and can be edited, exported, or imported.
 
 ## Game data
 
-The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, `equipment.json`, about 6.4 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
+The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, `equipment.json`, `fighter.json`, about 7.5 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
 
 ```bash
 python3 tools/build_game_data.py
