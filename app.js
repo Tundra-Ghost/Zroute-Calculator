@@ -274,6 +274,11 @@ function powerTotals() {
 }
 
 function targetKey(category, item) { return `${category}:${item}`; }
+// Fighter target row: a saved row above the current one, else the next row.
+function fighterTargetRow() {
+  const row = state.fighter.row; const max = fighterRows.length; const saved = Number(state.targets[targetKey('fighter-level', 'fighter')]) || 0;
+  return saved > row ? Math.min(max, saved) : Math.min(max, row + 1);
+}
 function targetFor(category, item, fallback) { return Number(state.targets[targetKey(category, item)] ?? fallback); }
 function formatNumber(value) { return new Intl.NumberFormat().format(Math.round(value || 0)); }
 function formatDuration(seconds) {
@@ -477,18 +482,25 @@ function planSummary(category, item, current, target, max = target) {
   const missingLevel = firstMissingLevel(category, item, current, target);
   return `<div class="upgrade-analytics ${incomplete ? 'incomplete' : ''}"><strong>YOU NEED</strong>${costChips(plan, category, item) || '<span>No cost</span>'}${incomplete ? `<small>⚠ Unknown values default to 0 until all data for this field is complete (${plan.found}/${plan.needed}). <button type="button" class="missing-data-button" data-add-record data-category="${category}" data-item="${escapeHtml(item)}" data-level="${missingLevel}">Fill level ${missingLevel}</button></small>` : ''}</div>`;
 }
+// The target defaults to the next level. A saved target above the current level is kept, so custom and max goals stay.
 function targetControl(category, item, current, max = 30, label = 'TARGET') {
-  const target = Math.max(current, Math.min(max, targetFor(category, item, current)));
-  return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${escapeHtml(item)}" type="number" min="${current}" max="${max}" value="${target}"></label>${planSummary(category, item, current, target, max)}</div>`;
+  const saved = state.targets[targetKey(category, item)];
+  const hasGoal = saved !== undefined && Number(saved) > current;
+  const maxed = current >= max;
+  const target = maxed ? max : hasGoal ? Math.min(max, Number(saved)) : current + 1;
+  return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${escapeHtml(item)}" type="number" min="${maxed ? max : current + 1}" max="${max}" value="${target}" ${maxed ? 'disabled' : ''}></label>${planSummary(category, item, current, hasGoal ? target : current, max)}</div>`;
 }
+const gearGlyphs = { Rifle: '🔫', Scope: '🔭', Helmet: '⛑️', 'Bullet Proof Vest': '🦺' };
 function equipmentControl(hero, progress, slot) {
   const quality = progress.equipment[slot] || 'None';
   const table = gearByQuality.get(quality);
+  const tier = equipmentQualities.indexOf(quality);
   const select = `<select class="hero-equipment" data-id="${hero.id}" data-slot="${slot}">${equipmentQualities.map(option => `<option ${quality === option ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
-  if (!table) return `<div class="gear-slot"><label>${slot.toUpperCase()}${select}</label></div>`;
+  const head = `<span class="gear-icon q${tier}" aria-hidden="true">${gearGlyphs[slot] || '⚙'}</span><label class="gear-quality">${slot.toUpperCase()}${select}</label>`;
+  if (!table) return `<div class="gear-row">${head}<small class="gear-row-note">${tier === 1 ? 'R gear cannot be upgraded.' : 'Pick a quality to plan upgrades.'}</small></div>`;
   const level = gearLevel(progress, slot, table);
   const item = `${hero.id}|${slot}`;
-  return `<div class="gear-slot"><label>${slot.toUpperCase()}${select}</label><label>LEVEL<input class="hero-equip-level" data-id="${hero.id}" data-slot="${slot}" type="number" min="0" max="${table.steps}" value="${level}"></label>${targetControl('hero-equip', item, level, table.steps)}<small>${level ? gearStepLabel(table, level) : 'Lv 0'} · max ${gearStepLabel(table, table.steps)}${table.steps > table.levels ? `. Steps ${table.levels + 1} to ${table.steps} are promotion stages.` : ''}</small></div>`;
+  return `<div class="gear-row">${head}<label class="now-input">LEVEL<input class="hero-equip-level" data-id="${hero.id}" data-slot="${slot}" type="number" min="0" max="${table.steps}" value="${level}"></label>${targetControl('hero-equip', item, level, table.steps)}<small class="gear-row-note">${level ? gearStepLabel(table, level) : 'Lv 0'} · max ${gearStepLabel(table, table.steps)}${table.steps > table.levels ? `. Steps ${table.levels + 1} to ${table.steps} are promotion stages.` : ''}</small></div>`;
 }
 function starPicker(id, steps, ownerType = 'hero') {
   return `<div class="star-picker" role="group" aria-label="Star power: ${(steps / 5).toFixed(1)} of 5 stars">${Array.from({length: 5}, (_, star) => `<div class="progress-star" role="group" aria-label="Star ${star + 1}">${Array.from({length: 5}, (_, section) => { const step = star * 5 + section + 1; const filled = step <= steps; return `<button class="star-section ${filled ? 'filled' : ''}" data-star-owner="${ownerType}" data-id="${id}" data-step="${step}" aria-label="Set star power to ${(step / 5).toFixed(1)}" aria-pressed="${filled}"></button>`; }).join('')}</div>`).join('')}</div>`;
@@ -805,7 +817,7 @@ function fighterPage() {
   pageHeader('MILITARY', 'Fighter');
   const max = fighterRows.length;
   const current = state.fighter.row;
-  const target = Math.max(current, Math.min(max, targetFor('fighter-level', 'fighter', current)));
+  const target = fighterTargetRow();
   const chips = GAME.fighter.chipSlots.map((slotName, slot) => {
     const saved = state.fighter.chips[slot]; const chip = fighterChip(slot);
     const options = `<option value="0">None</option>${GAME.fighter.chips.filter(item => item.slot === slot).map(item => `<option value="${item.id}" ${item.id === chip?.id ? 'selected' : ''}>${escapeHtml(item.name)}</option>`).join('')}`;
@@ -895,9 +907,9 @@ function heroCard(item, index, cap) {
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>${promotionNote(item, owned, progress)}
     ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary>${heroTabs(item, [
-        ['level', 'Level Up', `<section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="equipment">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section>${hasGear(item) ? `<section class="manage-block"><h4>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</h4><div class="level-pair"><label class="now-input">LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></section>` : ''}`],
+        ['level', 'Level Up', `<section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="gear-rows">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section>${hasGear(item) ? `<section class="manage-block"><h4>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</h4><div class="level-pair"><label class="now-input">LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></section>` : ''}`],
         ['skill', 'Skill', `<section class="manage-block skills"><h4>SKILLS · LEVEL CAP ${limit} AT ${stars} ★</h4><div class="skill-quads">${skills}</div><small class="gear-note">Raise hero stars to raise the skill level cap.</small></section>`],
-        ['star', 'Star Up', `<section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section>`]
+        ['star', 'Star Up', `<section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" max="${heroShards(item, 25)}" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section>`]
       ])}</details>`:''}
   </article>`;
 }
@@ -985,6 +997,15 @@ function bindPageControls() {
   document.querySelectorAll('[data-add-record]').forEach(button => button.addEventListener('click', () => requestUpgradeDialog({
     category: button.dataset.category, item: button.dataset.item, level: button.dataset.level
   })));
+  // A MAX button beside every level input fills in the highest allowed value.
+  document.querySelectorAll('.level-stepper input, .hero-level, .hero-skill, .hero-gear, .hero-shards, .hero-equip-level, .fighter-chip-star, .fighter-component, .fighter-evolution, .fighter-level-input, .target-level').forEach(input => {
+    if (input.disabled || input.max === '' || Number(input.value) >= Number(input.max)) return;
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'max-btn'; button.textContent = 'MAX'; button.setAttribute('aria-label', 'Set to max');
+    button.addEventListener('click', event => { event.preventDefault(); input.value = input.max; input.dispatchEvent(new Event('change')); });
+    const stepper = input.closest('.level-stepper');
+    if (stepper) stepper.append(button); else input.after(button);
+  });
   document.querySelectorAll('.level-stepper').forEach(control => {
     const input = control.querySelector('input');
     const update = value => {
@@ -992,7 +1013,7 @@ function bindPageControls() {
       input.value = level; state[control.dataset.group][control.dataset.name] = level; save(); renderRoute({ keepScroll: true });
     };
     input.addEventListener('change', () => update(input.value));
-    control.querySelectorAll('button').forEach(button => button.addEventListener('click', () => update(Number(input.value) + Number(button.dataset.change))));
+    control.querySelectorAll('button[data-change]').forEach(button => button.addEventListener('click', () => update(Number(input.value) + Number(button.dataset.change))));
   });
   document.querySelectorAll('[data-hero]').forEach(button => button.addEventListener('click', () => {
     const id = button.dataset.hero;
@@ -1042,7 +1063,7 @@ function bindPageControls() {
     } else state.targets[targetKey('fighter-level', 'fighter')] = Math.max(state.fighter.row, row);
     save(which === 'current' ? 'Fighter level saved' : 'Target saved'); renderRoute({ keepScroll: true });
   };
-  const fighterSide = which => which === 'current' ? state.fighter.row : Math.max(state.fighter.row, targetFor('fighter-level', 'fighter', state.fighter.row));
+  const fighterSide = which => which === 'current' ? state.fighter.row : fighterTargetRow();
   document.querySelectorAll('.fighter-level-input').forEach(input => input.addEventListener('change', () => {
     const level = Math.max(1, Math.min(fighterMaxLevel, Number(input.value) || 1));
     setFighterRow(input.dataset.fighterWhich, fighterRowFor(level, 0));

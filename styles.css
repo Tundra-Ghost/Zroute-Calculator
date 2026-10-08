@@ -184,3 +184,25 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .skill-stars li span{color:#555e5a;letter-spacing:-1px}.skill-stars li.got{color:#a6e07a}.skill-stars li.got span{color:#f2c94c}
 .skill-quad .level-pair{grid-template-columns:1fr 1.3fr}
 @media(max-width:700px){.skill-quads{grid-template-columns:1fr}}
+/* MAX buttons beside level inputs */
+.max-btn{margin-left:6px;padding:4px 8px;border:1px solid #6b5426;background:#211a0d;color:#f2c94c;font:700 9px var(--body);letter-spacing:1px;cursor:pointer;vertical-align:middle;align-self:center;justify-self:start}
+.max-btn:hover{background:#3a2c12;color:#ffe08a}
+.level-stepper .max-btn{margin-left:4px}
+.now-input,.level-pair .target-plan>label{grid-template-columns:1fr auto}
+.now-input>small,.now-input>:first-child{grid-column:1/-1}
+.level-pair .target-plan>label{display:grid;align-items:center}
+.level-pair .target-plan>label>.max-btn{grid-column:2}
+/* One-line gear rows: icon, quality, level, target */
+.gear-rows{display:flex;flex-direction:column;gap:8px}
+.gear-row{display:grid;grid-template-columns:44px minmax(130px,1fr) minmax(120px,.8fr) minmax(200px,1.6fr);gap:10px;align-items:start;background:#111a17;border:1px solid #26302d;padding:8px}
+.gear-icon{width:44px;height:44px;display:grid;place-items:center;font-size:22px;background:#1a2120;border:2px solid #3b4642}
+.gear-icon.q1{border-color:#4a9e5c;background:#14251a}.gear-icon.q2{border-color:#4a9be0;background:#13202e}.gear-icon.q3{border-color:#9b6cf0;background:#1f1830}.gear-icon.q4{border-color:var(--gold);background:#2a2110}
+.gear-quality{display:grid;gap:5px;color:#84908a;font-size:8px;letter-spacing:1px}
+.gear-quality select{width:100%;background:#0c1210;border:1px solid #303b37;color:#c6cec9;padding:8px;font-size:10px}
+.gear-row .now-input{padding:6px 8px}.gear-row .hero-details input[type=number],.gear-row input[type=number]{font-size:18px!important;padding:5px 8px!important}
+.gear-row .target-plan{padding:6px 8px;border-left:3px solid var(--gold);background:#1a1610;margin:0}
+.gear-row .target-plan>label{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px;color:var(--gold);font-size:8px;letter-spacing:1px}
+.gear-row .target-plan>label>input{grid-column:1;max-width:none!important;width:100%;background:#120e07;border:1px dashed #8a6a2a;color:#ffd98a;font:700 18px var(--display)}
+.gear-row-note{grid-column:2/-1;color:#6f7b75;font-size:9px}
+@media(max-width:800px){.gear-row{grid-template-columns:44px 1fr}.gear-row .now-input,.gear-row .target-plan,.gear-row-note{grid-column:1/-1}}
+.level-stepper button.max-btn{width:auto;min-width:0;height:auto;padding:5px 8px;font:700 9px var(--body);letter-spacing:1px;color:#f2c94c;background:#211a0d;border:1px solid #6b5426;align-self:center}
