@@ -958,9 +958,9 @@ function heroCard(item, index, cap) {
       ${starList}
       ${levelable ? `<div class="level-pair"><label class="now-input">LEVEL<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"><small>cap ${limit}</small></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>` : '<p class="skill-fixed">Fixed skill. No skill books needed.</p>'}</div>`;
   }).join('');
-  return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
+  return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}" ${owned ? `data-open-hero="${item.id}" title="Click to manage ${escapeHtml(item.name)}"` : ''}>${owned ? `<button type="button" class="hero-collapse" data-close-hero="${item.id}" aria-label="Collapse ${escapeHtml(item.name)}">✕</button>` : ''}
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>${promotionNote(item, owned, progress)}
-    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary>${heroTabs(item, [
+    ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${heroSkillSlots(item).map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary>${heroTabs(item, [
         ['level', 'Level Up', `<section class="manage-block"><h4>HERO LEVEL</h4><div class="level-pair"><label class="now-input">CURRENT<input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</div></section><section class="manage-block"><h4>EQUIPMENT</h4><div class="gear-rows">${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div></section>${hasGear(item) ? `<section class="manage-block"><h4>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</h4><div class="level-pair"><label class="now-input">LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></section>` : ''}`],
         ['skill', 'Skill', `<section class="manage-block skills"><h4>SKILLS · LEVEL CAP ${limit} AT ${stars} ★</h4><div class="skill-quads">${skills}</div><small class="gear-note">Raise hero stars to raise the skill level cap.</small></section>`],
         ['star', 'Star Up', `<section class="manage-block star-field"><h4>STAR POWER <b class="step-count">${progress.starSteps} / 25</b></h4>${starPicker(item.id, progress.starSteps)}<div class="level-pair"><label class="now-input">SHARDS INVESTED<input class="hero-shards" data-id="${item.id}" type="number" min="0" max="${heroShards(item, 25)}" value="${heroShards(item, progress.starSteps)}"><small>${stars} ★</small></label>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div></section>`]
@@ -1239,6 +1239,17 @@ function bindPageControls() {
   document.querySelectorAll('[data-heroes]').forEach(button => button.addEventListener('click', () => {
     const open = button.dataset.heroes === 'open';
     document.querySelectorAll('details.hero-manage').forEach(card => { card.open = open; });
+  }));
+  // Clicking an owned hero card opens it. The ✕ in the corner returns it to the card view.
+  document.querySelectorAll('[data-open-hero]').forEach(card => card.addEventListener('click', event => {
+    const manage = card.querySelector('details.hero-manage');
+    if (event.target.closest('summary')) event.preventDefault();
+    if (!manage || manage.open || event.target.closest('button, input, select, label, a')) return;
+    manage.open = true;
+  }));
+  document.querySelectorAll('[data-close-hero]').forEach(button => button.addEventListener('click', event => {
+    event.stopPropagation();
+    const manage = button.closest('.hero-card').querySelector('details.hero-manage'); if (manage) manage.open = false;
   }));
   document.querySelectorAll('details.hero-manage').forEach(card => card.addEventListener('toggle', () => {
     if (card.open) ui.openHeroes.add(card.dataset.heroId); else ui.openHeroes.delete(card.dataset.heroId);

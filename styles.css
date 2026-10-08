@@ -225,3 +225,14 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .update-banner{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#2a2110;border:1px solid #8a6a2a;color:#ffe2a6;font-size:12px;box-shadow:0 6px 24px #000a}
 .update-banner button{padding:6px 12px;border:1px solid #f2c94c;background:#f2c94c;color:#1a1408;font:700 11px var(--body);cursor:pointer}
 .hotkey-tip{color:#84908a;font-size:10px}
+/* Click a hero card to open it; ✕ collapses it */
+.hero-card{position:relative}
+.hero-card[data-open-hero]:not(:has(.hero-manage[open])){cursor:pointer}
+.hero-card[data-open-hero]:not(:has(.hero-manage[open])):hover{border-color:#6c7a74;background:#151e1b}
+.hero-manage>summary{cursor:inherit}
+.hero-collapse{display:none;position:absolute;top:10px;right:10px;z-index:3;width:34px;height:34px;border:1px solid #4a5753;background:#141b19;color:#d6ddd8;font-size:15px;cursor:pointer}
+.hero-collapse:hover{border-color:var(--orange);color:var(--orange)}
+.hero-card:has(.hero-manage[open]) .hero-collapse{display:block}
+.hero-card button.hero-collapse{width:36px;height:36px;min-height:0;margin:0;padding:0;font:400 18px/1 var(--body);letter-spacing:0;color:#d6ddd8;background:#141b19;border:1px solid #4a5753}
+.hero-card button.hero-collapse:hover{border-color:var(--orange);color:var(--orange)}
+.hero-card:has(.hero-manage[open]) button.hero-collapse{display:grid;place-items:center;text-align:center}

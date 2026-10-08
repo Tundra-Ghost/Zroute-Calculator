@@ -24,6 +24,7 @@ Newest first. Dates are when the change went live on `main`.
 
 ### Heroes
 - Sorted UR, then SSR, then SR in each class. SR is blue, SSR purple, UR gold.
+- Click an owned hero card to open it. The ✕ in the top right returns it to the card view.
 - Hero management has **Level Up**, **Skill** and **Star Up** tabs, like the game.
 - Skills sit in a 2×2 grid with icon, level badge, name, type, cooldown, effect and the five star bonuses. The Specialty skill stays at level 1.
 - Star power shows the step out of 25 and takes shards invested as input.
