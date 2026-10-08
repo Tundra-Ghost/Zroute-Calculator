@@ -11,6 +11,9 @@ Newest first. Dates are when the change went live on `main`.
 - Buildings with copies have **Set all** and **Max all** for every unlocked copy.
 - Research trees have **Max whole tree** and **Reset tree to 0**. A node has **Max this node and every node before it**.
 
+### Site updates
+- The site checks for a newer release and shows a "Reload" banner, since GitHub Pages can serve a cached page for up to 10 minutes.
+
 ### Research
 - Fully upgraded research trees show a "Max level reached" banner on the tree card and the tree page.
 

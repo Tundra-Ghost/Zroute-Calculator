@@ -1411,3 +1411,20 @@ $('#resetData').addEventListener('click', () => { if (!confirm('Reset your profi
 window.addEventListener('hashchange', renderRoute);
 setProfile(); renderRoute();
 if (!state.profile.name) setTimeout(() => $('#profileButton').click(), 450);
+
+// GitHub Pages may serve a cached index.html for a few minutes after a release.
+// Check the live page's asset version and offer a reload when it differs.
+function checkForUpdate() {
+  const loaded = document.querySelector('script[src*="app.js"]')?.src.match(/v=(\w+)/)?.[1];
+  if (!loaded || location.protocol === 'file:') return;
+  fetch('index.html', { cache: 'no-store' }).then(response => response.ok ? response.text() : '').then(html => {
+    const live = html.match(/app\.js\?v=(\w+)/)?.[1];
+    if (!live || live === loaded || $('#updateBanner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'updateBanner'; banner.className = 'update-banner';
+    banner.innerHTML = 'A new version of the site is ready. <button type="button">Reload</button>';
+    banner.querySelector('button').addEventListener('click', () => location.reload());
+    document.body.append(banner);
+  }).catch(() => {});
+}
+checkForUpdate(); setInterval(checkForUpdate, 5 * 60 * 1000);
