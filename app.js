@@ -6,7 +6,7 @@ const LEGACY_STORAGE_KEY = 'zroute-command-center-v2';
 const GAME = window.ZROUTE_DATA || {
   resources: {}, vipBuildingSpeed: [], benefitTypes: {}, buildings: [], researchTrees: [], research: [],
   heroes: [], heroExp: {}, skillBooks: {}, starShards: [], starSkillLimit: [],
-  producers: [], outputBenefits: {}, speedups: [], exclusiveGear: {}, gearShards: []
+  producers: [], outputBenefits: {}, speedups: [], exclusiveGear: {}, gearShards: [], gear: []
 };
 
 const buildingIcons = {
@@ -52,14 +52,22 @@ const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
 const survivorRarities = ['Other', 'SSR', 'Mythic'];
 // Observation records keep their original fields. Plan totals use the wider list.
 const resourceNames = ['food', 'metal', 'oil', 'shards', 'tokens'];
-const planResources = ['food', 'metal', 'oil', 'uranium', 'antibody', 'researchData', 'heroExp', 'shards', 'skillBooks', 'gearShards', 'tokens'];
+const planResources = ['food', 'metal', 'oil', 'uranium', 'antibody', 'researchData', 'heroExp', 'shards', 'skillBooks', 'gearShards', 'refiningStone', 'heatGold', 'composite', 'crystal', 'blueprintLegendary', 'blueprintMythic', 'tokens'];
 const resourceTitles = { ...GAME.resources, shards: 'Shards', gearShards: 'Weapon Shards', tokens: 'Tokens' };
 const emptyResources = () => Object.fromEntries(planResources.map(name => [name, 0]));
 const powerFields = ['heroLevel', 'heroSkill', 'heroAttributes', 'heroStars', 'gear', 'hallOfLegends', 'exclusiveWeapons', 'soldier', 'building', 'survivor', 'tech', 'fighterLevel', 'fighterComponent', 'wingman'];
 const emptyPower = () => Object.fromEntries(powerFields.map(name => [name, 0]));
 const bonusFields = ['vipLevel', 'buildingSpeed', 'researchSpeed'];
 const emptyBonuses = () => Object.fromEntries(bonusFields.map(name => [name, 0]));
-const dataCategories = ['building', 'research', 'hero-level', 'hero-star', 'hero-skill', 'hero-gear'];
+const dataCategories = ['building', 'research', 'hero-level', 'hero-star', 'hero-skill', 'hero-gear', 'hero-equip'];
+// Gear quality N in the data is equipmentQualities[N - 1]. R gear cannot be crafted or upgraded.
+const gearByQuality = new Map(GAME.gear.map(table => [equipmentQualities[table.quality - 1], table]));
+// Steps past the strengthen max are UR promotion stages.
+function gearStepLabel(table, step) {
+  if (step <= table.levels) return `Lv ${step}`;
+  const [promotion, stage] = table.stages[step - table.levels - 1];
+  return stage ? `Lv ${table.levels} · promotion ${promotion + 1} stage ${stage}` : `Lv ${table.levels} · promotion ${promotion} complete`;
+}
 const hasGear = hero => Boolean(GAME.exclusiveGear[hero.gameId]);
 const gearMax = () => GAME.gearShards.length || 30;
 
@@ -184,6 +192,7 @@ function heroProgress(hero) {
   const progress = state.heroProgress[hero.id] || {};
   return { level: 1, starSteps: 0, equipment: {}, skills: {}, ...progress };
 }
+function gearLevel(progress, slot, table) { return Math.min(table.steps, Number(progress.equipLevels?.[slot]) || 0); }
 function shardsUsed(steps) { return sumRange(starShardCosts, 0, steps); }
 function skillCap(steps) { return GAME.starSkillLimit[steps] || 1; }
 
@@ -221,6 +230,7 @@ function upgradeItems(category) {
   if (category === 'hero-level' || category === 'hero-star') items = heroes.map(item => ({ value: item.id, label: heroLabel(item) }));
   if (category === 'hero-gear') items = heroes.filter(hasGear).map(item => ({ value: item.id, label: `${heroLabel(item)} · Exclusive weapon` }));
   if (category === 'hero-skill') items = heroes.flatMap(item => skillSlots.map(slot => ({ value: `${item.id}|${slot}`, label: `${heroLabel(item)} · Skill ${slot}` })));
+  if (category === 'hero-equip') items = heroes.flatMap(item => equipmentSlots.map(slot => ({ value: `${item.id}|${slot}`, label: `${heroLabel(item)} · ${slot}` })));
   if (category === 'survivor-star') items = state.survivors.map(item => ({ value: item.id, label: `${item.name} · ${item.rarity}` }));
   const existingItems = state.upgradeRecords
     .filter(record => record.category === category && !items.some(item => item.value === record.item))
@@ -268,6 +278,10 @@ function dataPlan(category, item, current, target) {
   if (category === 'hero-skill') result.resources.skillBooks = sumRange(GAME.skillBooks[hero.skillCurve], Math.max(1, current), target);
   // Level L costs gearShards[L - 1] to reach L + 1. The unlock cost (0 to 1) is not in the data.
   if (category === 'hero-gear') result.resources.gearShards = sumRange(GAME.gearShards, Math.max(1, current) - 1, target - 1);
+  if (category === 'hero-equip') {
+    const table = gearByQuality.get(heroProgress(hero).equipment[String(item).split('|')[1]]);
+    if (table) return tableCost(table, current, target);
+  }
   return result;
 }
 function calculateUpgrade(category, item, current, target) {
@@ -297,7 +311,11 @@ function planObjectives() {
         objective('hero-level', item.id, level, item.maxLevel),
         objective('hero-star', item.id, stars, 25),
         ...skillSlots.map(slot => objective('hero-skill', `${item.id}|${slot}`, owned ? Number(progress.skills[slot]) || 1 : 0, GAME.skillBooks[item.skillCurve]?.length || 30)),
-        ...(hasGear(item) ? [objective('hero-gear', item.id, owned ? Number(progress.gear) || 0 : 0, gearMax())] : [])
+        ...(hasGear(item) ? [objective('hero-gear', item.id, owned ? Number(progress.gear) || 0 : 0, gearMax())] : []),
+        ...(owned ? equipmentSlots.flatMap(slot => {
+          const table = gearByQuality.get(progress.equipment[slot]);
+          return table ? [objective('hero-equip', `${item.id}|${slot}`, gearLevel(progress, slot, table), table.steps)] : [];
+        }) : [])
       ];
     }),
     ...Object.values(allianceBranches).flat().map(name => objective('alliance', name, Number(state.alliance[name]) || 0, 30)),
@@ -364,6 +382,15 @@ function planSummary(category, item, current, target, max = target) {
 function targetControl(category, item, current, max = 30, label = 'TARGET') {
   const target = Math.max(current, Math.min(max, targetFor(category, item, current)));
   return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${escapeHtml(item)}" type="number" min="${current}" max="${max}" value="${target}"></label>${planSummary(category, item, current, target, max)}</div>`;
+}
+function equipmentControl(hero, progress, slot) {
+  const quality = progress.equipment[slot] || 'None';
+  const table = gearByQuality.get(quality);
+  const select = `<select class="hero-equipment" data-id="${hero.id}" data-slot="${slot}">${equipmentQualities.map(option => `<option ${quality === option ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
+  if (!table) return `<div class="gear-slot"><label>${slot.toUpperCase()}${select}</label></div>`;
+  const level = gearLevel(progress, slot, table);
+  const item = `${hero.id}|${slot}`;
+  return `<div class="gear-slot"><label>${slot.toUpperCase()}${select}</label><label>LEVEL<input class="hero-equip-level" data-id="${hero.id}" data-slot="${slot}" type="number" min="0" max="${table.steps}" value="${level}"></label>${targetControl('hero-equip', item, level, table.steps)}<small>${level ? gearStepLabel(table, level) : 'Lv 0'} · max ${gearStepLabel(table, table.steps)}${table.steps > table.levels ? `. Steps ${table.levels + 1} to ${table.steps} are promotion stages.` : ''}</small></div>`;
 }
 function starPicker(id, steps, ownerType = 'hero') {
   return `<div class="star-picker" role="group" aria-label="Star power: ${(steps / 5).toFixed(1)} of 5 stars">${Array.from({length: 5}, (_, star) => `<div class="progress-star" role="group" aria-label="Star ${star + 1}">${Array.from({length: 5}, (_, section) => { const step = star * 5 + section + 1; const filled = step <= steps; return `<button class="star-section ${filled ? 'filled' : ''}" data-star-owner="${ownerType}" data-id="${id}" data-step="${step}" aria-label="Set star power to ${(step / 5).toFixed(1)}" aria-pressed="${filled}"></button>`; }).join('')}</div>`).join('')}</div>`;
@@ -457,7 +484,21 @@ function resourcesPage() {
       <article><span>RESEARCH TIME LEFT</span><strong>${formatDuration(coverage.researchLeft)}</strong></article>
       <article><span>GENERAL SPEEDUPS SPARE</span><strong>${formatDuration(coverage.generalLeft)}</strong></article>
     </div><p>Build and research speedups go first. General speedups then cover building time, then research time.</p></section>
-    <form id="speedupForm" class="speedup-form power-fields">${groups}</form>`;
+    <form id="speedupForm" class="speedup-form power-fields">${groups}</form>
+    ${gearReference()}`;
+}
+function gearReference() {
+  if (!GAME.gear.length) return '';
+  const chips = resources => Object.entries(resources).filter(([, count]) => count).map(([name, count]) => `<span><b>${formatNumber(count)}</b> ${escapeHtml(resourceTitles[name] || name)}</span>`).join('');
+  const rows = GAME.gear.map(table => {
+    const toMax = tableCost(table, 0, table.levels).resources;
+    const promotion = table.steps > table.levels ? tableCost(table, table.levels, table.steps).resources : null;
+    return `<article><h3>${escapeHtml(equipmentQualities[table.quality - 1])}</h3>
+      <div class="upgrade-analytics"><strong>CRAFT ONE PIECE</strong>${chips(table.craft)}<span><b>${formatDuration(table.craftSeconds)}</b> TIME</span><span>Gear Craft Center Lv ${table.craftBuildingLevel}</span></div>
+      <div class="upgrade-analytics"><strong>LV 0 TO ${table.levels}</strong>${chips(toMax)}</div>
+      ${promotion ? `<div class="upgrade-analytics"><strong>ALL ${table.steps - table.levels} PROMOTION STAGES</strong>${chips(promotion)}</div>` : ''}</article>`;
+  }).join('');
+  return `<section class="grand-plan gear-reference"><header><div><p class="eyebrow">PER PIECE · ALL SLOTS COST THE SAME</p><h2>Gear crafting and upgrades</h2></div><a class="button secondary" href="#heroes">Set hero gear</a></header><div class="gear-tables">${rows}</div><p>Base costs. Crafting speed and oil cost research are not applied. R gear cannot be crafted or upgraded.</p></section>`;
 }
 
 function plannerPage() {
@@ -621,7 +662,7 @@ function heroCard(item, index, cap) {
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
-    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>`<label>${slot}<select class="hero-equipment" data-id="${item.id}" data-slot="${slot}">${equipmentQualities.map(quality=>`<option ${progress.equipment[slot]===quality?'selected':''}>${quality}</option>`).join('')}</select></label>`).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div>`:''}
+    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div>`:''}
   </article>`;
 }
 
@@ -636,7 +677,7 @@ function survivorsPage() {
 
 function dataPage() {
   pageHeader('PLANNING DATABASE', 'Upgrade data');
-  const categoryOptions = [['building', 'Building'], ['research', 'Research'], ['hero-level', 'Hero level'], ['hero-star', 'Hero star'], ['hero-skill', 'Hero skill'], ['alliance', 'Alliance research'], ['survivor-star', 'Survivor star']].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+  const categoryOptions = [['building', 'Building'], ['research', 'Research'], ['hero-level', 'Hero level'], ['hero-star', 'Hero star'], ['hero-skill', 'Hero skill'], ['hero-equip', 'Hero gear'], ['alliance', 'Alliance research'], ['survivor-star', 'Survivor star']].map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
   return `<section class="page-intro"><div><p class="eyebrow">GAME DATA</p><h2>Upgrade cost database</h2><p>Buildings, research, and heroes use the bundled game data. Alliance research and survivors still use the observations you record below.</p></div><div class="completion-ring"><strong>${state.upgradeRecords.length}</strong><span>LOCAL RECORDS</span></div></section>
     <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS</span><strong>${GAME.buildings.length}</strong><small>Costs, times, and requirements</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH NODES</span><strong>${researchNodes.length}</strong><small>${researchTrees.length} trees</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES</span><strong>${heroes.length}</strong><small>EXP, shards, skill books</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>NOT IN DATA</span><strong>2</strong><small>Alliance research, survivors</small></div></article></section>
     <section class="objective-calculator"><div><p class="eyebrow">ANY UPGRADE</p><h2>Target calculator</h2><p>Choose a tracked item to plan its requirements.</p></div><form id="objectiveForm"><label>CATEGORY<select name="category">${categoryOptions}</select></label><label>ITEM<select name="item" required>${upgradeItemOptions('building')}</select></label><label>CURRENT<input name="current" type="number" min="0" required value="0"></label><label>TARGET<input name="target" type="number" min="1" required value="1"></label><button class="button primary" type="submit">Calculate</button></form><div id="objectiveResult" class="objective-result">Choose an objective to calculate its requirements.</div></section>
@@ -738,7 +779,15 @@ function bindPageControls() {
   document.querySelectorAll('.hero-equipment').forEach(select => select.addEventListener('change', () => {
     const progress = heroProgress({ id: select.dataset.id });
     progress.equipment = { ...progress.equipment, [select.dataset.slot]: select.value };
-    state.heroProgress[select.dataset.id] = progress; save();
+    // A new piece of a different quality starts at level 0.
+    progress.equipLevels = { ...progress.equipLevels, [select.dataset.slot]: 0 };
+    delete state.targets[targetKey('hero-equip', `${select.dataset.id}|${select.dataset.slot}`)];
+    state.heroProgress[select.dataset.id] = progress; save('Gear saved'); renderRoute({ keepScroll: true });
+  }));
+  document.querySelectorAll('.hero-equip-level').forEach(input => input.addEventListener('change', () => {
+    const progress = heroProgress({ id: input.dataset.id });
+    progress.equipLevels = { ...progress.equipLevels, [input.dataset.slot]: Math.max(0, Math.min(Number(input.max), Number(input.value) || 0)) };
+    state.heroProgress[input.dataset.id] = progress; save('Gear level saved'); renderRoute({ keepScroll: true });
   }));
   document.querySelectorAll('.star-section').forEach(button => button.addEventListener('click', () => {
     const steps = Number(button.dataset.step);
