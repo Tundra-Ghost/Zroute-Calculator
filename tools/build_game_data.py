@@ -19,7 +19,7 @@ SOURCE = ROOT / 'data' / 'source'
 OUTPUT = ROOT / 'data' / 'game-data.js'
 ICONS = ROOT / 'assets' / 'icons'
 RESOURCE_ICONS = {'food': 'food', 'metal': 'metal', 'oil': 'oil', 'heroExp': 'hero_exp',
-                  'researchData': 'research_data', 'skillBooks': 'skill_book', 'combatChips': 'chips'}
+                  'researchData': 'research_data', 'skillBooks': 'skill_book', 'combatChips': 'chips', 'fighterParts': 'fighter_parts'}
 
 COST_KEYS = {1: 'food', 2: 'metal', 3: 'oil', 5: 'heroExp', 211: 'uranium', 212: 'antibody'}
 ITEM_KEYS = {
@@ -272,6 +272,7 @@ def build_heroes(heroes_raw):
             'expCurve': str(raw['level_curve_id']),
             'skillCurve': str(raw['quality']),
             'icon': icon('heroes', raw['id']),
+            'skillIcons': [icon('skills', f"{raw['id']}_{slot}") for slot in (1, 2, 3)],
         })
     class_order = ['Warrior', 'Assault', 'Tactical']
     rarity_order = ['SR', 'SSR', 'UR']
@@ -287,8 +288,10 @@ def build_heroes(heroes_raw):
     }
     steps = sorted(heroes_raw['star_curve'], key=lambda step: step['step'])
     star_shards = [step['fragment_count'] for step in steps[1:]]
+    # A promoted hero (Aria UR) pays the higher shard cost per step.
+    promoted_shards = [step['extra_fragment_count'] for step in steps[1:]]
     skill_limits = [max(slot['level_limit'] for slot in step['skill_slots']) for step in steps]
-    return heroes, exp_curves, skill_curves, star_shards, skill_limits
+    return heroes, exp_curves, skill_curves, star_shards, promoted_shards, skill_limits
 
 
 def main():
@@ -298,7 +301,7 @@ def main():
     equipment = load('equipment.json')
     fighter = load('fighter.json')
     trees, research = build_research(progression, load('research_layout.json'))
-    heroes, exp_curves, skill_curves, star_shards, skill_limits = build_heroes(heroes_raw)
+    heroes, exp_curves, skill_curves, star_shards, promoted_shards, skill_limits = build_heroes(heroes_raw)
     modifiers = progression['construction_modifiers']
     data = {
         'version': 1,
@@ -313,6 +316,8 @@ def main():
         'heroExp': exp_curves,
         'skillBooks': skill_curves,
         'starShards': star_shards,
+        'starShardsPromoted': promoted_shards,
+        'classIcons': {name: icon('ui', f'class_{camp}') for camp, name in HERO_CLASS.items()},
         'starSkillLimit': skill_limits,
         'producers': [{
             'building': item['building_id'], 'output': item['output_name'],

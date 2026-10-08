@@ -78,6 +78,19 @@ function fighterRowLabel(row) {
   const [level, phase] = fighterRows[row - 1] || [1, 0];
   return phase ? `Lv ${level} · stage ${phase - 1}/5` : `Lv ${level}`;
 }
+// Level L either has one plain row, or five key upgrade rows shown as stage 0-4 of 5.
+const fighterMaxLevel = Math.max(...fighterRows.map(([level]) => level));
+const fighterHasStages = level => fighterRows.some(([rowLevel, phase]) => rowLevel === level && phase > 0);
+function fighterRowFor(level, stage) {
+  const index = fighterRows.findIndex(([rowLevel, phase]) => rowLevel === level && (fighterHasStages(level) ? phase === stage + 1 : true));
+  return index + 1 || 1;
+}
+function fighterLevelPicker(which, row, minRow = 1) {
+  const [level, phase] = fighterRows[row - 1] || [1, 0];
+  const stage = phase ? phase - 1 : 0;
+  const bar = fighterHasStages(level) ? `<div class="stage-bar" role="group" aria-label="Stage ${stage} of 5">${[1, 2, 3, 4, 5].map(segment => `<button type="button" class="stage-segment ${segment <= stage ? 'filled' : ''}" data-fighter-which="${which}" data-stage="${segment}" ${segment === 5 ? 'disabled title="Stage 5 is the next level"' : ''} aria-label="Stage ${segment}"></button>`).join('')}<small>STAGE ${stage} / 5</small></div>` : '<div class="stage-bar empty"><small>No stages at this level</small></div>';
+  return `<div class="fighter-picker"><label>${which === 'current' ? 'CURRENT' : 'TARGET'} LEVEL<input class="fighter-level-input" data-fighter-which="${which}" type="number" min="${fighterRows[minRow - 1]?.[0] || 1}" max="${fighterMaxLevel}" value="${level}"></label>${bar}</div>`;
+}
 function fighterChip(slot) { return chipById.get(Number(state.fighter.chips[slot]?.id)); }
 // Steps past the strengthen max are UR promotion stages.
 function gearStepLabel(table, step) {
@@ -99,6 +112,8 @@ const defaults = {
   upgradeRecords: [],
   speedups: {},
   targets: {},
+  // "Everything to max" what-ifs. Ministers add speed; the ignore switches drop bonuses.
+  maxOptions: { buildMinister: 0, researchMinister: 0, ignoreResearch: false, ignoreVip: false, ignoreOther: false },
   fighter: { row: 1, chips: GAME.fighter.chipSlots.map(() => ({ id: 0, star: 0 })), components: GAME.fighter.componentSlots.map(() => 0), evolution: 0 }
 };
 
@@ -133,6 +148,7 @@ function loadState() {
       upgradeRecords: Array.isArray(saved.upgradeRecords) ? saved.upgradeRecords : [],
       speedups: saved.speedups && typeof saved.speedups === 'object' ? saved.speedups : {},
       targets: saved.targets && typeof saved.targets === 'object' ? saved.targets : {},
+      maxOptions: { ...defaults.maxOptions, ...saved.maxOptions },
       fighter: {
         row: Math.max(1, Math.min(fighterRows.length, Number(saved.fighter?.row) || 1)),
         chips: defaults.fighter.chips.map((empty, slot) => ({ ...empty, ...saved.fighter?.chips?.[slot] })),
@@ -186,19 +202,25 @@ function flatNote(bonus) {
   }).filter(Boolean);
   return parts.length ? ` · ${parts.join(' · ')}` : '';
 }
+// Set only while the max-out what-if is computed.
+let whatIf = null;
 function speedBonuses() {
   const bonuses = state.profile.bonuses;
-  const vip = GAME.vipBuildingSpeed[Number(bonuses.vipLevel) || 0] || 0;
-  const researchBuilding = researchBenefit(GAME.benefitTypes.buildingSpeed) * 100;
-  const researchResearch = researchBenefit(GAME.benefitTypes.researchSpeed) * 100;
+  const options = whatIf || {};
+  const research = type => options.ignoreResearch ? 0 : researchBenefit(type);
+  const vip = options.ignoreVip ? 0 : GAME.vipBuildingSpeed[Number(bonuses.vipLevel) || 0] || 0;
+  const researchBuilding = research(GAME.benefitTypes.buildingSpeed) * 100;
+  const researchResearch = research(GAME.benefitTypes.researchSpeed) * 100;
+  const otherBuilding = options.ignoreOther ? 0 : Number(bonuses.buildingSpeed) || 0;
+  const otherResearch = options.ignoreOther ? 0 : Number(bonuses.researchSpeed) || 0;
   return {
     vip, researchBuilding, researchResearch,
-    building: vip + researchBuilding + (Number(bonuses.buildingSpeed) || 0),
-    research: researchResearch + (Number(bonuses.researchSpeed) || 0),
-    buildingCost: researchBenefit(GAME.benefitTypes.buildingCost) * 100,
+    building: vip + researchBuilding + otherBuilding + (Number(options.buildMinister) || 0),
+    research: researchResearch + otherResearch + (Number(options.researchMinister) || 0),
+    buildingCost: research(GAME.benefitTypes.buildingCost) * 100,
     // Flat cuts per upgrade (benefit parameter type 2 is a fixed amount).
-    buildingFlat: { food: researchBenefit(20101), metal: researchBenefit(20102) },
-    researchFlat: { food: researchBenefit(20110), metal: researchBenefit(20111), oil: researchBenefit(20112) }
+    buildingFlat: { food: research(20101), metal: research(20102) },
+    researchFlat: { food: research(20110), metal: research(20111), oil: research(20112) }
   };
 }
 const speedUp = (seconds, percent) => Math.ceil(seconds / (1 + Math.max(0, percent) / 100));
@@ -224,7 +246,11 @@ function nextLevelNeeds(reqs = []) {
 function heroCap() { return Math.max(5, 150 - (30 - Math.min(30, hqLevel())) * 5); }
 function heroProgress(hero) {
   const progress = state.heroProgress[hero.id] || {};
-  return { level: 1, starSteps: 0, equipment: {}, skills: {}, ...progress };
+  // A promoted hero starts at 3 stars (step 15).
+  const minSteps = heroes.find(item => item.id === hero.id)?.promoted ? 15 : 0;
+  const result = { level: 1, starSteps: minSteps, equipment: {}, skills: {}, ...progress };
+  result.starSteps = Math.max(minSteps, Number(result.starSteps) || 0);
+  return result;
 }
 function gearLevel(progress, slot, table) { return Math.min(table.steps, Number(progress.equipLevels?.[slot]) || 0); }
 function shardsUsed(steps) { return sumRange(starShardCosts, 0, steps); }
@@ -320,7 +346,7 @@ function dataPlan(category, item, current, target) {
   const hero = heroForItem(item); if (!hero) return null;
   const result = { resources: emptyResources(), seconds: 0 };
   if (category === 'hero-level') result.resources.heroExp = sumRange(GAME.heroExp[hero.expCurve], Math.max(1, current), target);
-  if (category === 'hero-star') result.resources.shards = sumRange(starShardCosts, current, target);
+  if (category === 'hero-star') result.resources.shards = sumRange(hero.promoted && GAME.starShardsPromoted?.length ? GAME.starShardsPromoted : starShardCosts, current, target);
   if (category === 'hero-skill') result.resources.skillBooks = sumRange(GAME.skillBooks[hero.skillCurve], Math.max(1, current), target);
   // Level L costs gearShards[L - 1] to reach L + 1. The unlock cost (0 to 1) is not in the data.
   if (category === 'hero-gear') result.resources.gearShards = sumRange(GAME.gearShards, Math.max(1, current) - 1, target - 1);
@@ -390,12 +416,25 @@ function maxOutPlan() {
     ...buildings.map(({ name, def }) => ({ category: 'building', item: name, current: Number(state.buildings[name]) || 0, target: def.max })),
     ...researchNodes.map(node => ({ category: 'research', item: String(node.id), current: researchLevel(node.id), target: node.max }))
   ].filter(item => item.target > item.current);
-  return objectives.reduce((sum, objective) => {
-    const plan = calculateUpgrade(objective.category, objective.item, objective.current, objective.target);
-    planResources.forEach(name => { sum.resources[name] += plan.resources[name]; });
-    sum.seconds += plan.seconds; sum.steps += plan.needed;
-    return sum;
-  }, { resources: emptyResources(), seconds: 0, steps: 0 });
+  whatIf = state.maxOptions;
+  try {
+    return objectives.reduce((sum, objective) => {
+      const plan = calculateUpgrade(objective.category, objective.item, objective.current, objective.target);
+      planResources.forEach(name => { sum.resources[name] += plan.resources[name]; });
+      sum.seconds += plan.seconds; sum.steps += plan.needed;
+      sum[objective.category === 'building' ? 'buildSeconds' : 'researchSeconds'] += plan.seconds;
+      return sum;
+    }, { resources: emptyResources(), seconds: 0, buildSeconds: 0, researchSeconds: 0, steps: 0 });
+  } finally { whatIf = null; }
+}
+function maxOptionsForm() {
+  const options = state.maxOptions;
+  const check = (name, label) => `<label class="check"><input type="checkbox" name="${name}" ${options[name] ? 'checked' : ''}> ${label}</label>`;
+  return `<details class="max-options"><summary>What-if options${options.buildMinister || options.researchMinister || options.ignoreResearch || options.ignoreVip || options.ignoreOther ? ' · ACTIVE' : ''}</summary><form id="maxOptionsForm">
+    <label>CONSTRUCTION MINISTER %<input type="number" name="buildMinister" min="0" step="0.1" value="${Number(options.buildMinister) || 0}"></label>
+    <label>RESEARCH MINISTER %<input type="number" name="researchMinister" min="0" step="0.1" value="${Number(options.researchMinister) || 0}"></label>
+    ${check('ignoreResearch', 'Remove research bonuses')}${check('ignoreVip', 'Remove VIP speed')}${check('ignoreOther', 'Remove other speed (statues, events)')}
+  </form><small>Only changes this "Everything to max" total. Enter the minister bonus your capitol appointment gives.</small></details>`;
 }
 function totalValues(plan) {
   return `<div class="grand-plan-values">${shownResources(plan.resources).map(name => `<article><span>${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('')}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.seconds)}</strong></article></div>`;
@@ -407,7 +446,7 @@ function grandPlanMarkup() {
     : `${formatNumber(plan.goals)} targets set. ${incomplete ? `⚠ ${formatNumber(plan.needed - plan.found)} alliance or survivor steps still need recorded costs.` : 'Every step has cost data.'}`;
   const max = maxOutPlan();
   return `<section class="grand-plan ${incomplete ? 'incomplete' : ''}"><header><div><p class="eyebrow">YOUR TARGETS</p><h2>Planned upgrades</h2></div><a class="button secondary" href="#planner">Open goal planner</a></header>${totalValues(plan)}<p>${note}</p></section>
-  <section class="grand-plan max-plan"><header><div><p class="eyebrow">FROM YOUR CURRENT LEVELS</p><h2>Everything to max</h2></div><span class="pill">${formatNumber(max.steps)} LEVELS LEFT</span></header>${totalValues(max)}<p>Every building copy and research node from its saved level to max. Change any level and this updates. Times include your speed bonuses but not speedup items.</p></section>`;
+  <section class="grand-plan max-plan"><header><div><p class="eyebrow">FROM YOUR CURRENT LEVELS</p><h2>Everything to max</h2></div><span class="pill">${formatNumber(max.steps)} LEVELS LEFT</span></header>${totalValues(max)}<p class="split-times">Building time ${formatDuration(max.buildSeconds)} · Research time ${formatDuration(max.researchSeconds)}</p>${maxOptionsForm()}<p>Every building copy and research node from its saved level to max. Change any level and this updates. Times include your speed bonuses but not speedup items.</p></section>`;
 }
 function resourceLabel(name, category, item) {
   if (name !== 'shards') return resourceTitles[name].toUpperCase();
@@ -557,7 +596,25 @@ function plannerPage() {
   const researchOptions = researchTrees.map(tree => `<optgroup label="${escapeHtml(tree.name)}">${nodesInTree(tree).map(node => `<option value="r:${node.id}">${escapeHtml(node.name)}</option>`).join('')}</optgroup>`).join('');
   return `<section class="page-intro"><div><p class="eyebrow">GOAL PLANNER</p><h2>What does it take?</h2><p>Pick a building or research and a level. The planner adds every prerequisite you are still missing, based on your saved levels.</p></div></section>
     ${bonusPanel()}
-    <section class="objective-calculator"><div><p class="eyebrow">CHOOSE A GOAL</p><h2>Goal</h2><p>Multi-copy buildings use your highest copy.</p></div><form id="goalForm"><label>GOAL<select name="goal"><optgroup label="Buildings">${buildingOptions}</optgroup>${researchOptions}</select></label><label>TARGET LEVEL<input name="level" type="number" min="1" max="30" value="${Math.min(30, hqLevel() + 1)}" required></label><button class="button primary" type="submit">Plan goal</button></form><div id="goalResult" class="objective-result">Choose a goal to see every upgrade it needs.</div></section>`;
+    <section class="objective-calculator"><div><p class="eyebrow">CHOOSE A GOAL</p><h2>Goal</h2><p>Multi-copy buildings use your highest copy.</p></div><form id="goalForm"><label>GOAL<select name="goal"><optgroup label="Buildings">${buildingOptions}</optgroup>${researchOptions}</select></label><label>TARGET LEVEL<input name="level" type="number" min="1" max="30" value="${Math.min(30, hqLevel() + 1)}" required></label><button class="button primary" type="submit">Plan goal</button></form><div id="goalResult" class="objective-result">Choose a goal to see every upgrade it needs.</div></section>
+    ${targetList()}`;
+}
+const categoryNames = { building: 'Building', research: 'Research', 'hero-level': 'Hero level', 'hero-star': 'Hero stars', 'hero-skill': 'Hero skill', 'hero-gear': 'Exclusive weapon', 'hero-equip': 'Hero gear', 'fighter-level': 'Fighter level', 'fighter-chip': 'Wingman chip', 'fighter-component': 'Fighter component', 'fighter-evolution': 'Fighter evolution', alliance: 'Alliance research', 'survivor-star': 'Survivor stars' };
+function objectiveName(category, item) {
+  if (category === 'research') return researchById.get(Number(item))?.name || item;
+  if (category.startsWith('hero')) { const [id, part] = String(item).split('|'); const hero = heroForItem(id); return `${hero?.name || id}${hero?.promoted ? ' UR' : ''}${part ? ` · ${/^\d$/.test(part) ? `Skill ${part}` : part}` : ''}`; }
+  if (category === 'fighter-chip') return fighterChip(Number(item))?.name || `Chip slot ${Number(item) + 1}`;
+  if (category === 'fighter-component') return GAME.fighter.componentSlots[Number(item)] || item;
+  if (category === 'fighter-level') return 'Fighter';
+  if (category === 'fighter-evolution') return 'Evolution';
+  if (category === 'survivor-star') return state.survivors.find(person => person.id === item)?.name || item;
+  return item;
+}
+function objectiveLevel(category, value) { return category === 'fighter-level' ? fighterRowLabel(value) : `Lv ${value}`; }
+function targetList() {
+  const objectives = planObjectives();
+  const rows = objectives.map(objective => { const plan = calculateUpgrade(objective.category, objective.item, objective.current, objective.target); return `<article><div><span>${escapeHtml(categoryNames[objective.category] || objective.category).toUpperCase()}</span><b>${escapeHtml(objectiveName(objective.category, objective.item))}</b><small>${objectiveLevel(objective.category, objective.current)} → ${objectiveLevel(objective.category, objective.target)}</small></div><div class="target-cost">${costChips(plan, objective.category, objective.item)}</div><button type="button" class="delete-target" data-delete-target="${escapeHtml(targetKey(objective.category, objective.item))}" aria-label="Delete this goal">✕</button></article>`; }).join('');
+  return `<details open class="panel grand-plan target-list"><summary><div><p class="eyebrow">${objectives.length} SAVED</p><h2>Your goals</h2></div>${objectives.length ? '<button type="button" class="button secondary" data-clear-targets>Delete all</button>' : ''}</summary>${rows || '<p>No goals yet. Set a target on any building, research node, hero, or fighter part and it shows up here.</p>'}</details>`;
 }
 function goalResultMarkup(kind, id, level) {
   const { steps, total } = planGoal(kind, id, level);
@@ -585,9 +642,22 @@ function overviewPage() {
   const power = powerTotals();
   return `<section class="hero-banner"><div><span class="chapter">SERVER 52 · EXPEDITIONCORPS [EXC]</span><h2>Plan the road<br><strong>ahead.</strong></h2><p>Record progress, power, and exact requirements from one local profile.</p></div><div class="level-control summary"><span>TOTAL POWER</span><strong>${formatNumber(power.total)}</strong><small>Unknown values currently count as 0</small></div></section>
   ${grandPlanMarkup()}
-  <section class="power-summary"><header><div><p class="eyebrow">COMMANDER ANALYTICS</p><h2>Power level</h2></div><button class="button secondary" data-edit-profile>Edit power data</button></header><div>${Object.entries({Hero:power.hero,Soldier:power.soldier,Building:power.building,Tech:power.tech,Fighter:power.fighter}).map(([name,value])=>`<article><span>${name.toUpperCase()} POWER</span><strong>${formatNumber(value)}</strong></article>`).join('')}</div><p>⚠ Unknown power values default to 0 until all data for each field has been completed.</p></section>
+  ${fighterOverview()}
+  <section class="power-summary"><header><div><p class="eyebrow">COMMANDER ANALYTICS</p><h2>Power level</h2></div><button class="button secondary" data-edit-profile>Edit power data</button></header><div>${Object.entries({Hero:power.hero,Soldier:power.soldier,Building:power.building,Tech:power.tech,Fighter:power.fighter}).map(([name,value])=>`<article><span>${iconImg('assets/icons/ui/power.webp', 'chip-icon')}${name.toUpperCase()} POWER</span><strong>${formatNumber(value)}</strong></article>`).join('')}</div><p>⚠ Unknown power values default to 0 until all data for each field has been completed.</p></section>
   <section class="stats-grid"><article class="stat-card"><div class="stat-icon orange">⌂</div><div><span>BUILDINGS BUILT</span><strong>${builtSlots} / ${buildings.length}</strong><small>HQ level ${hqLevel()}</small></div></article><article class="stat-card"><div class="stat-icon green">⌬</div><div><span>RESEARCH LEVELS</span><strong>${formatNumber(researchDone)}</strong><small>Across ${researchTrees.length} trees</small></div></article><article class="stat-card"><div class="stat-icon gold">♙</div><div><span>HEROES OWNED</span><strong>${state.ownedHeroes.length} / ${heroes.length}</strong><small>From the game roster</small></div></article><article class="stat-card"><div class="stat-icon blue">◇</div><div><span>ALLIANCE LEVELS</span><strong>${Object.values(state.alliance).reduce((a,b)=>a+b,0)}</strong><small>Entered by you</small></div></article></section>
   <section class="quick-grid"><a class="quick-card" href="#construction"><span>01</span><h3>Construction</h3><p>Set building levels and see the cost of every upgrade.</p><b>Open tracker →</b></a><a class="quick-card" href="#research"><span>02</span><h3>Research</h3><p>Track every research node and its cost.</p><b>Open research →</b></a><a class="quick-card" href="#planner"><span>03</span><h3>Goal planner</h3><p>See everything an HQ or research goal needs.</p><b>Open planner →</b></a><a class="quick-card" href="#heroes"><span>04</span><h3>Hero roster</h3><p>Plan EXP, shards, and skill books.</p><b>Open heroes →</b></a><a class="quick-card" href="#survivors"><span>05</span><h3>Survivors</h3><p>Assign specialists and plan their stars.</p><b>Open survivors →</b></a></section>`;
+}
+
+function fighterOverview() {
+  const row = state.fighter.row; const max = fighterRows.length;
+  if (max <= 1) return '';
+  const target = Math.max(row, targetFor('fighter-level', 'fighter', row));
+  const toTarget = target > row ? calculateUpgrade('fighter-level', 'fighter', row, target) : null;
+  const toMax = calculateUpgrade('fighter-level', 'fighter', row, max);
+  const values = plan => ['combatChips', 'fighterParts'].map(name => `<article><span>${iconImg(GAME.resourceIcons?.[name], 'chip-icon')}${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('');
+  return `<section class="grand-plan"><header><div><p class="eyebrow">FIGHTER · NOW ${fighterRowLabel(row).toUpperCase()}</p><h2>Fighter needs</h2></div><a class="button secondary" href="#fighter">Open fighter</a></header>
+    ${toTarget ? `<p class="eyebrow">TO TARGET ${fighterRowLabel(target).toUpperCase()}</p><div class="grand-plan-values">${values(toTarget)}</div>` : '<p>No fighter target set.</p>'}
+    <p class="eyebrow">TO MAX ${fighterRowLabel(max).toUpperCase()}</p><div class="grand-plan-values">${values(toMax)}</div></section>`;
 }
 
 function filterPage() {
@@ -721,7 +791,6 @@ function fighterPage() {
   const max = fighterRows.length;
   const current = state.fighter.row;
   const target = Math.max(current, Math.min(max, targetFor('fighter-level', 'fighter', current)));
-  const rowOptions = (selected, from = 1) => fighterRows.map((_, index) => index + 1).filter(row => row >= from).map(row => `<option value="${row}" ${row === selected ? 'selected' : ''}>${fighterRowLabel(row)}</option>`).join('');
   const chips = GAME.fighter.chipSlots.map((slotName, slot) => {
     const saved = state.fighter.chips[slot]; const chip = fighterChip(slot);
     const options = `<option value="0">None</option>${GAME.fighter.chips.filter(item => item.slot === slot).map(item => `<option value="${item.id}" ${item.id === chip?.id ? 'selected' : ''}>${escapeHtml(item.name)}</option>`).join('')}`;
@@ -736,7 +805,7 @@ function fighterPage() {
   }).join('');
   return `<section class="page-intro"><div><p class="eyebrow">FIGHTER</p><h2>Fighter planner</h2><p>Set your fighter level and stage as the game shows it, then pick a target. Every 5th level, and every level after 150, has five key upgrade stages that also cost Fighter Parts.</p></div></section>
     <details open class="panel grand-plan"><summary><div><p class="eyebrow">NOW ${fighterRowLabel(current).toUpperCase()}</p><h2>Fighter level</h2></div></summary>
-      <div class="fighter-level"><label>CURRENT<select id="fighterRow">${rowOptions(current)}</select></label><label>TARGET<select id="fighterTarget">${rowOptions(target, current)}</select></label></div>
+      <div class="fighter-level">${fighterLevelPicker('current', current)}${fighterLevelPicker('target', target, current)}</div>
       ${planSummary('fighter-level', 'fighter', current, target, max)}
       <p>Assumes no bonus progress. Lucky bonus clicks make real costs lower.</p></details>
     <details open class="panel grand-plan"><summary><div><p class="eyebrow">COMPONENTS</p><h2>Component levels</h2></div></summary><div class="gear-tables">${components}</div><p>Level 0 means the slot is empty. Up to level 8, three pieces merge into one. After that, pieces are fed as XP. Costs are shown as Lv 1 component copies: a level L piece counts as 3^(L-1) copies.</p></details>
@@ -749,6 +818,7 @@ const roadmap = [
   { title: 'Server tracker', status: 'Planned', text: 'Track server activity: player counts, top power, new arrivals, and the event schedule for your server.', needs: 'A shared database that members or a bot feed, since the site has no server access on its own.' },
   { title: 'Alliance tracker', status: 'Planned', text: 'Track your alliance power, membership, and joins and leaves over time. Members can sync their base stats to show alliance totals and averages.', needs: 'Member sync through a shared database.' },
   { title: 'VS tracker', status: 'Planned', text: 'Record VS scores per day and per member, show participation history, and flag missed days.', needs: 'Daily score entry or screenshot import.' },
+  { title: 'Screenshot import', status: 'Idea', text: 'Upload a game screenshot, such as your resource totals or a building screen, and the site reads the numbers and fills them in for you.', needs: 'Image text recognition. It can run in the browser, so screenshots never leave your device.' },
   { title: 'Inventory and "can I afford it"', status: 'Idea', text: 'Enter what you own (resources, speedups, gear materials, chips) and see what is left to farm for each target, plus how long your production takes to cover it.' },
   { title: 'Event calendar', status: 'Idea', text: 'Upcoming events and season unlocks with reminders, so you save speedups and resources for the right day.' },
   { title: 'Share and compare plans', status: 'Idea', text: 'Export your profile as a link so alliance leaders can see member progress and compare plans.' },
@@ -767,10 +837,18 @@ function heroesPage() {
   return `<section class="page-intro hero-intro"><div><p class="eyebrow">HERO DIRECTORY</p><h2>Your hero roster</h2><p>Track ownership, levels, star power, skills, and equipment. Your HQ ${hqLevel()} hero level cap is ${cap}.</p></div><div class="hero-cap"><span>HERO LEVEL CAP</span><strong>${cap}</strong><small>HQ 30 max · −5 per HQ level</small></div></section>
   <div class="hero-legend"><span><i class="rarity SR">SR</i> Rare</span><span><i class="rarity SSR">SSR</i> Super rare</span><span><i class="rarity UR">UR</i> Ultimate rare</span><span>FL · Frontline</span><span>BL · Backline</span><span>S · Support</span></div>
   <section class="toolbar"><label class="check"><input id="heroOwnedOnly" type="checkbox" ${ui.heroOwnedOnly ? 'checked' : ''}> Show only heroes in my roster</label><span class="toolbar-actions"><button type="button" class="button secondary" data-heroes="open">Open all</button><button type="button" class="button secondary" data-heroes="close">Close all</button></span></section>
-  ${['Warrior','Assault','Tactical'].map(heroClass => { const list = heroes.filter(item => item.heroClass === heroClass); const shown = ui.heroOwnedOnly ? list.filter(item => state.ownedHeroes.includes(item.id)) : list; const owned = list.filter(item => state.ownedHeroes.includes(item.id)).length; return shown.length ? `<details open class="panel hero-class"><summary><div><p class="eyebrow">HERO CLASS</p><h2>${heroClass}</h2></div><span>${owned} / ${list.length} OWNED</span></summary><div class="hero-grid">${shown.map(item => heroCard(item, list.indexOf(item), cap)).join('')}</div></details>` : ''; }).join('') || '<p class="empty-note">No heroes in your roster yet. Untick the filter to add some.</p>'}
+  ${['Warrior','Assault','Tactical'].map(heroClass => { const list = heroes.filter(item => item.heroClass === heroClass); const shown = ui.heroOwnedOnly ? list.filter(item => state.ownedHeroes.includes(item.id)) : list; const owned = list.filter(item => state.ownedHeroes.includes(item.id)).length; return shown.length ? `<details open class="panel hero-class"><summary>${iconImg(GAME.classIcons?.[heroClass], 'class-icon')}<div><p class="eyebrow">HERO CLASS</p><h2>${heroClass}</h2></div><span>${owned} / ${list.length} OWNED</span></summary><div class="hero-grid">${shown.map(item => heroCard(item, list.indexOf(item), cap)).join('')}</div></details>` : ''; }).join('') || '<p class="empty-note">No heroes in your roster yet. Untick the filter to add some.</p>'}
   <p class="source-note">Hero EXP, star shards (5 / 10 / 20 / 60 / 100 per subsection, 975 total), and skill books come from the game data. Skill level caps rise with stars.</p>`;
 }
 
+// Aria SSR promotes to Aria UR at 5 stars. Stars drop to 3 and each step costs double shards.
+const promotedVersion = hero => heroes.find(other => other.promoted && other.name === hero.name && other.id !== hero.id);
+function promotionNote(hero, owned, progress) {
+  if (hero.promoted) return `<p class="promo-note">Promoted from ${escapeHtml(hero.name)} SSR at 5 ★. Stars restart at 3 ★ and each star step costs double shards.</p>`;
+  const promoted = promotedVersion(hero); if (!promoted) return '';
+  const ready = owned && progress.starSteps >= 25 && !state.ownedHeroes.includes(promoted.id);
+  return `<p class="promo-note">Can promote to UR at 5 ★.${ready ? ` <button type="button" class="promote-button" data-promote="${hero.id}">Promote to UR</button>` : ''}</p>`;
+}
 function heroHasTargets(hero) {
   return Object.keys(state.targets).some(key => key.split(':')[1]?.split('|')[0] === hero.id && Number(state.targets[key]) > 0);
 }
@@ -782,10 +860,10 @@ function heroCard(item, index, cap) {
   const skillMax = GAME.skillBooks[item.skillCurve]?.length || 30;
   const skills = skillSlots.map(slot => {
     const level = Math.min(limit, Number(progress.skills[slot]) || 1);
-    return `<div class="skill-row"><label>SKILL ${slot}<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>`;
+    return `<div class="skill-row">${iconImg(item.skillIcons?.[slot - 1], 'skill-icon')}<label>SKILL ${slot}<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>`;
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
-    <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
+    <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>${promotionNote(item, owned, progress)}
     ${owned?`<details class="hero-manage" data-hero-id="${item.id}" ${ui.openHeroes.has(item.id) ? 'open' : ''}><summary><span>MANAGE</span><b>Lv ${Math.min(progress.level, cap)} · ${stars} ★ · skills ${skillSlots.map(slot => Math.min(limit, Number(progress.skills[slot]) || 1)).join('/')}</b>${heroHasTargets(item) ? '<small class="plan-ready">TARGETS SET</small>' : ''}</summary><div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div></details>`:''}
   </article>`;
 }
@@ -910,12 +988,24 @@ function bindPageControls() {
     delete state.targets[targetKey('hero-equip', `${select.dataset.id}|${select.dataset.slot}`)];
     state.heroProgress[select.dataset.id] = progress; save('Gear saved'); renderRoute({ keepScroll: true });
   }));
-  $('#fighterRow')?.addEventListener('change', event => {
-    state.fighter.row = Number(event.target.value); save('Fighter level saved'); renderRoute({ keepScroll: true });
-  });
-  $('#fighterTarget')?.addEventListener('change', event => {
-    state.targets[targetKey('fighter-level', 'fighter')] = Number(event.target.value); save('Target saved'); renderRoute({ keepScroll: true });
-  });
+  // Fighter level: a level number plus a 5-segment stage bar for current and target.
+  const setFighterRow = (which, row) => {
+    if (which === 'current') {
+      state.fighter.row = row;
+      if (targetFor('fighter-level', 'fighter', row) < row) delete state.targets[targetKey('fighter-level', 'fighter')];
+    } else state.targets[targetKey('fighter-level', 'fighter')] = Math.max(state.fighter.row, row);
+    save(which === 'current' ? 'Fighter level saved' : 'Target saved'); renderRoute({ keepScroll: true });
+  };
+  const fighterSide = which => which === 'current' ? state.fighter.row : Math.max(state.fighter.row, targetFor('fighter-level', 'fighter', state.fighter.row));
+  document.querySelectorAll('.fighter-level-input').forEach(input => input.addEventListener('change', () => {
+    const level = Math.max(1, Math.min(fighterMaxLevel, Number(input.value) || 1));
+    setFighterRow(input.dataset.fighterWhich, fighterRowFor(level, 0));
+  }));
+  document.querySelectorAll('.stage-segment').forEach(button => button.addEventListener('click', () => {
+    const which = button.dataset.fighterWhich; const [level, phase] = fighterRows[fighterSide(which) - 1];
+    const clicked = Number(button.dataset.stage); const stage = phase - 1 === clicked ? clicked - 1 : clicked;
+    setFighterRow(which, fighterRowFor(level, Math.max(0, Math.min(4, stage))));
+  }));
   document.querySelectorAll('.fighter-chip').forEach(select => select.addEventListener('change', () => {
     state.fighter.chips[select.dataset.slot] = { id: Number(select.value), star: 0 };
     delete state.targets[targetKey('fighter-chip', select.dataset.slot)];
@@ -945,7 +1035,8 @@ function bindPageControls() {
       if (survivor) survivor.starSteps = survivor.starSteps === steps ? Math.max(0, steps - 1) : steps;
     } else {
       const progress = heroProgress({ id: button.dataset.id });
-      progress.starSteps = progress.starSteps === steps ? Math.max(0, steps - 1) : steps;
+      const minSteps = heroes.find(item => item.id === button.dataset.id)?.promoted ? 15 : 0;
+      progress.starSteps = Math.max(minSteps, progress.starSteps === steps ? steps - 1 : steps);
       state.heroProgress[button.dataset.id] = progress;
     }
     save('Star power saved'); renderRoute({ keepScroll: true });
@@ -976,6 +1067,13 @@ function bindPageControls() {
   $('#buildingSearch')?.addEventListener('input', event => { ui.buildingSearch = event.target.value; applyBuildingFilter(); });
   $('#hideLocked')?.addEventListener('change', event => { ui.hideLocked = event.target.checked; applyBuildingFilter(); });
   if ($('#buildingSearch')) applyBuildingFilter();
+  document.querySelectorAll('[data-promote]').forEach(button => button.addEventListener('click', () => {
+    const from = heroes.find(item => item.id === button.dataset.promote); const to = promotedVersion(from);
+    const progress = heroProgress(from);
+    state.heroProgress[to.id] = { ...progress, starSteps: 15 };
+    state.ownedHeroes = [...state.ownedHeroes.filter(id => id !== from.id), to.id];
+    save(`${from.name} promoted to UR`); renderRoute({ keepScroll: true });
+  }));
   $('#heroOwnedOnly')?.addEventListener('change', event => { ui.heroOwnedOnly = event.target.checked; renderRoute({ keepScroll: true }); });
   document.querySelectorAll('[data-heroes]').forEach(button => button.addEventListener('click', () => {
     const open = button.dataset.heroes === 'open';
@@ -1013,10 +1111,28 @@ function bindPageControls() {
     const input = event.target; state.speedups[input.name] = Math.max(0, Number(input.value) || 0);
     save('Speedups saved'); renderRoute({ keepScroll: true });
   });
+  $('#maxOptionsForm')?.addEventListener('change', event => {
+    const form = event.currentTarget;
+    state.maxOptions = {
+      buildMinister: Math.max(0, Number(form.elements.buildMinister.value) || 0), researchMinister: Math.max(0, Number(form.elements.researchMinister.value) || 0),
+      ignoreResearch: form.elements.ignoreResearch.checked, ignoreVip: form.elements.ignoreVip.checked, ignoreOther: form.elements.ignoreOther.checked
+    };
+    ui.maxOptionsOpen = true; save('What-if updated'); renderRoute({ keepScroll: true });
+  });
+  if (ui.maxOptionsOpen && $('.max-options')) $('.max-options').open = true;
+  $('.max-options')?.addEventListener('toggle', event => { ui.maxOptionsOpen = event.target.open; });
   $('#bonusForm')?.addEventListener('change', event => {
     const form = event.currentTarget;
     state.profile.bonuses = Object.fromEntries(bonusFields.map(name => [name, Math.max(0, Number(form.elements[name].value) || 0)]));
     save('Bonuses saved'); renderRoute({ keepScroll: true });
+  });
+  document.querySelectorAll('[data-delete-target]').forEach(button => button.addEventListener('click', () => {
+    delete state.targets[button.dataset.deleteTarget]; save('Goal deleted'); renderRoute({ keepScroll: true });
+  }));
+  $('[data-clear-targets]')?.addEventListener('click', event => {
+    event.preventDefault();
+    if (!confirm('Delete all saved goals?')) return;
+    state.targets = {}; save('All goals deleted'); renderRoute({ keepScroll: true });
   });
   $('#goalForm')?.addEventListener('submit', event => {
     event.preventDefault(); const values = Object.fromEntries(new FormData(event.currentTarget));
