@@ -784,7 +784,7 @@ function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
   return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Tap a building to open it and set each copy's level and target. The closed card shows your levels and the total cost to your targets.</p></div><div class="completion-ring"><strong>HQ ${hqLevel()}</strong><span>${buildings.filter(item => !isLocked(item)).length} / ${buildings.length} UNLOCKED</span></div></section>
   ${bonusPanel()}
-  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide locked buildings and copies</label>${autoFillToggle()}<button type="button" class="button secondary" data-fill-all>Fill missing prerequisites</button><span class="toolbar-actions"><button type="button" class="button secondary" data-cards="open">Open all</button><button type="button" class="button secondary" data-cards="close">Close all</button></span></section>
+  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide locked buildings and copies</label>${autoFillToggle()}<button type="button" class="button secondary" data-fill-all>Fill missing prerequisites</button><small class="hotkey-tip">Tip: press M in a level or target box to max it.</small><span class="toolbar-actions"><button type="button" class="button secondary" data-cards="open">Open all</button><button type="button" class="button secondary" data-cards="close">Close all</button></span></section>
   ${constructionGroups.map(group => { const levels = group.buildings.reduce((sum, item) => sum + (Number(state.buildings[item.name]) || 0), 0); const max = group.buildings.reduce((sum, item) => sum + item.def.max, 0); return `<details class="construction-group" data-group="${group.name}" ${ui.collapsed.has(group.name) ? '' : 'open'}><summary><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${new Set(group.buildings.map(item => item.def)).size} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'} · ${levels} / ${max} LEVELS</span><span class="group-actions"><button type="button" class="button secondary" data-group-target="max" data-group-name="${group.name}">Target max</button><button type="button" class="button secondary" data-group-target="clear" data-group-name="${group.name}">Clear targets</button></span></summary><div class="building-list">${[...new Set(group.buildings.map(item => item.def))].map(def => buildingCard(def, group.buildings.filter(item => item.def === def))).join('')}</div></details>`; }).join('')}
   <p class="source-note">Times include the speed bonuses above. Resource costs include the research building cost cut and flat cost cuts. Event bonuses are not applied.</p>`;
 }
@@ -848,7 +848,7 @@ function researchPage() {
     const selected = researchById.get(ui.selectedNode[selectedTree.gameId]) || nodes.find(node => nodeStatus(node) === 'available' || nodeStatus(node) === 'progress') || nodes[0];
     return `<div class="tree-head"><a class="source-link" href="#research">← All trees</a><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS</span></div></div>
       ${total > 0 && done >= total ? '<div class="max-banner wide">MAX LEVEL REACHED</div>' : ''}<div class="tree-tools">${autoFillToggle()}<button type="button" class="button secondary" data-tree-max="${selectedTree.gameId}">Max whole tree</button><button type="button" class="button secondary" data-tree-clear="${selectedTree.gameId}">Reset tree to 0</button></div>
-      <div class="tree-legend"><span class="maxed">Maxed</span><span class="progress">In progress</span><span class="available">Ready to start</span><span class="locked">Locked</span><small>Tap a node to set its level and target.</small></div>
+      <div class="tree-legend"><span class="maxed">Maxed</span><span class="progress">In progress</span><span class="available">Ready to start</span><span class="locked">Locked</span><small>Tap a node to set its level and target. Press M to max the selected node.</small></div>
       <div class="tree-layout">${researchTreeMarkup(selectedTree, selected)}${researchDetail(selected)}</div>`;
   }
 
@@ -1408,6 +1408,19 @@ $('#survivorForm').addEventListener('submit', event => {
 });
 $('#profileForm').addEventListener('submit', event => { event.preventDefault(); const name=$('#nameInput').value.trim(); if (!name) return; state.profile.name=name; state.profile.power = Object.fromEntries(powerFields.map(field => [field, Math.max(0, Number(event.currentTarget.elements[field].value) || 0)])); save('Profile and power saved'); setProfile(); $('#profileDialog').close(); renderRoute(); });
 $('#resetData').addEventListener('click', () => { if (!confirm('Reset your profile and every saved level?')) return; state=structuredClone(defaults); save('Progress reset'); setProfile(); renderRoute(); });
+// Hotkey: "m" in a level or target box sets it to its max. On a research tree with no box focused, it maxes the selected node.
+document.addEventListener('keydown', event => {
+  if (event.key.toLowerCase() !== 'm' || event.ctrlKey || event.metaKey || event.altKey) return;
+  const active = document.activeElement;
+  if (active?.matches('input[type=number]')) {
+    if (active.max === '' || active.disabled) return;
+    event.preventDefault(); active.value = active.max; active.dispatchEvent(new Event('change'));
+  } else if (!active?.matches('input, textarea, select, [contenteditable]')) {
+    const input = $('#nodeDetail .level-stepper input');
+    if (!input || Number(input.value) >= Number(input.max)) return;
+    event.preventDefault(); input.value = input.max; input.dispatchEvent(new Event('change'));
+  }
+});
 window.addEventListener('hashchange', renderRoute);
 setProfile(); renderRoute();
 if (!state.profile.name) setTimeout(() => $('#profileButton').click(), 450);

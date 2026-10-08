@@ -224,3 +224,4 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .tree-tools .check{font-size:11px;color:#b7c0bb;display:flex;align-items:center;gap:6px}
 .update-banner{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#2a2110;border:1px solid #8a6a2a;color:#ffe2a6;font-size:12px;box-shadow:0 6px 24px #000a}
 .update-banner button{padding:6px 12px;border:1px solid #f2c94c;background:#f2c94c;color:#1a1408;font:700 11px var(--body);cursor:pointer}
+.hotkey-tip{color:#84908a;font-size:10px}

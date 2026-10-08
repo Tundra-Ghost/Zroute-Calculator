@@ -18,7 +18,7 @@ Newest first. Dates are when the change went live on `main`.
 - Fully upgraded research trees show a "Max level reached" banner on the tree card and the tree page.
 
 ### Levels and targets
-- Every level input has a **MAX** button.
+- Every level input has a **MAX** button. Pressing **M** in a level or target box maxes it. On a research tree, M maxes the selected node.
 - Targets start at the next level. A saved target above the current level (custom or max) is kept. A maxed item has no target to edit.
 - Locked research nodes show what they need. The node panel says "Unlock needs".
 
