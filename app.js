@@ -62,7 +62,7 @@ const dataCategories = ['building', 'research', 'hero-level', 'hero-star', 'hero
 
 const defaults = {
   profile: { name: '', server: 52, alliance: 'ExpeditionCorps', allianceTag: 'ExC', power: emptyPower(), bonuses: emptyBonuses() },
-  buildings: Object.fromEntries(buildings.map(({ name }) => [name, name === 'HQ' ? 1 : 0])),
+  buildings: Object.fromEntries(buildings.map(({ name }) => [name, 1])),
   research: {},
   alliance: Object.fromEntries(Object.values(allianceBranches).flat().map(name => [name, 0])),
   ownedHeroes: [],
@@ -306,13 +306,29 @@ function grandUpgradePlan() {
 function shownResources(resources, always = ['food', 'metal', 'oil']) {
   return planResources.filter(name => always.includes(name) || resources[name]);
 }
+function maxOutPlan() {
+  const objectives = [
+    ...buildings.map(({ name, def }) => ({ category: 'building', item: name, current: Number(state.buildings[name]) || 0, target: def.max })),
+    ...researchNodes.map(node => ({ category: 'research', item: String(node.id), current: researchLevel(node.id), target: node.max }))
+  ].filter(item => item.target > item.current);
+  return objectives.reduce((sum, objective) => {
+    const plan = calculateUpgrade(objective.category, objective.item, objective.current, objective.target);
+    planResources.forEach(name => { sum.resources[name] += plan.resources[name]; });
+    sum.seconds += plan.seconds; sum.steps += plan.needed;
+    return sum;
+  }, { resources: emptyResources(), seconds: 0, steps: 0 });
+}
+function totalValues(plan) {
+  return `<div class="grand-plan-values">${shownResources(plan.resources).map(name => `<article><span>${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('')}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.seconds)}</strong></article></div>`;
+}
 function grandPlanMarkup() {
   const plan = grandUpgradePlan();
   const incomplete = plan.found !== plan.needed;
-  const values = shownResources(plan.resources).map(name => `<article><span>${resourceTitles[name].toUpperCase()}</span><strong>${formatNumber(plan.resources[name])}</strong></article>`).join('');
-  const note = !plan.goals ? 'No targets set yet. Set a target on any building, research, or hero and it is added here.'
-    : `${formatNumber(plan.goals)} targets set. ${incomplete ? `⚠ ${formatNumber(plan.needed - plan.found)} alliance or survivor steps still need recorded costs.` : 'Every step has cost data.'} Time includes your speed bonuses but not speedup items.`;
-  return `<section class="grand-plan ${incomplete ? 'incomplete' : ''}"><header><div><p class="eyebrow">ALL PLANNED UPGRADES</p><h2>Grand total requirements</h2></div><a class="button secondary" href="#planner">Open goal planner</a></header><div class="grand-plan-values">${values}<article class="grand-plan-time"><span>TOTAL TIME</span><strong>${formatDuration(plan.seconds)}</strong></article></div><p>${note}</p></section>`;
+  const note = !plan.goals ? 'No targets set yet. Set a target on any building, research node, or hero and it is added here.'
+    : `${formatNumber(plan.goals)} targets set. ${incomplete ? `⚠ ${formatNumber(plan.needed - plan.found)} alliance or survivor steps still need recorded costs.` : 'Every step has cost data.'}`;
+  const max = maxOutPlan();
+  return `<section class="grand-plan ${incomplete ? 'incomplete' : ''}"><header><div><p class="eyebrow">YOUR TARGETS</p><h2>Planned upgrades</h2></div><a class="button secondary" href="#planner">Open goal planner</a></header>${totalValues(plan)}<p>${note}</p></section>
+  <section class="grand-plan max-plan"><header><div><p class="eyebrow">FROM YOUR CURRENT LEVELS</p><h2>Everything to max</h2></div><span class="pill">${formatNumber(max.steps)} LEVELS LEFT</span></header>${totalValues(max)}<p>Every building copy and research node from its saved level to max. Change any level and this updates. Times include your speed bonuses but not speedup items.</p></section>`;
 }
 function resourceLabel(name, category, item) {
   if (name !== 'shards') return resourceTitles[name].toUpperCase();
@@ -438,26 +454,63 @@ function filterItems() {
   ];
 }
 
-function buildingCard({ name, description, icon, def, unlock }) {
+const ui = { buildingSearch: '', hideLocked: false, collapsed: new Set(), selectedNode: {} };
+function isLocked(item) { return item.name !== 'HQ' && hqLevel() < item.unlock; }
+function buildingCard(item) {
+  const { name, description, icon, def } = item;
   const level = Number(state.buildings[name]) || 0;
-  const locked = hqLevel() < unlock && name !== 'HQ';
-  return `<article class="tracker-card ${locked ? 'locked' : ''}"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${escapeHtml(name)}</h3><p>${escapeHtml(description)} · max ${def.max}</p>${level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', name, level, def.max)}${def.max > 1 ? targetControl('building', name, level, def.max) : planSummary('building', name, level, level, def.max)}</article>`;
+  const locked = isLocked(item);
+  return `<article class="tracker-card ${locked ? 'locked' : ''}" data-search="${escapeHtml(name.toLowerCase())}"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${escapeHtml(name)}${locked ? ' <small class="lock-tag">LOCKED</small>' : ''}</h3><p>${escapeHtml(description)} · max ${def.max}</p>${level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', name, level, def.max)}${def.max > 1 ? targetControl('building', name, level, def.max) : planSummary('building', name, level, level, def.max)}</article>`;
 }
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
-  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Set current and target levels. Costs and build times come from the game data.</p></div><div class="completion-ring"><strong>${buildings.filter(item => state.buildings[item.name] > 0).length}</strong><span>BUILT</span></div></section>
+  return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Set each building to the level shown in game. Each card shows the next level cost, or the total to your target.</p></div><div class="completion-ring"><strong>HQ ${hqLevel()}</strong><span>${buildings.filter(item => !isLocked(item)).length} / ${buildings.length} UNLOCKED</span></div></section>
   ${bonusPanel()}
-  ${constructionGroups.map(group => `<section class="construction-group"><header><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'}</span></header><div class="card-grid">${group.buildings.map(buildingCard).join('')}</div></section>`).join('')}
+  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide buildings your HQ has not unlocked</label></section>
+  ${constructionGroups.map(group => { const levels = group.buildings.reduce((sum, item) => sum + (Number(state.buildings[item.name]) || 0), 0); const max = group.buildings.reduce((sum, item) => sum + item.def.max, 0); return `<details class="construction-group" data-group="${group.name}" ${ui.collapsed.has(group.name) ? '' : 'open'}><summary><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${group.buildings.length} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'} · ${levels} / ${max} LEVELS</span><span class="group-actions"><button type="button" class="button secondary" data-group-target="max" data-group-name="${group.name}">Target max</button><button type="button" class="button secondary" data-group-target="clear" data-group-name="${group.name}">Clear targets</button></span></summary><div class="card-grid">${group.buildings.map(buildingCard).join('')}</div></details>`; }).join('')}
   <p class="source-note">Times include the speed bonuses above. Resource costs include the research building cost cut. Flat cost reductions and event bonuses are not applied.</p>`;
 }
 
-function researchNodeRow(node) {
-  const level = researchLevel(node.id);
-  const effect = node.effects[0];
-  const effectText = effect ? `${effect.name} ${level ? formatEffect(effect.values[level - 1]) : '0'} → max ${formatEffect(effect.values[node.max - 1])}` : '';
-  return `<div class="tech-row"><div><b>${escapeHtml(node.name)}</b><p>${escapeHtml(effectText)}</p>${level < node.max ? nextLevelNeeds(node.req[level]) : ''}</div>${levelControl('research', node.id, level, node.max)}${targetControl('research', String(node.id), level, node.max)}</div>`;
-}
 function formatEffect(value) { return value > 0 && value < 1 ? `${Math.round(value * 10000) / 100}%` : formatNumber(value); }
+function nodeStatus(node) {
+  const level = researchLevel(node.id);
+  if (level >= node.max) return 'maxed';
+  if (level > 0) return 'progress';
+  return (node.req[0] || []).every(requirementMet) ? 'available' : 'locked';
+}
+// Rows follow prerequisite depth. Each row holds up to three nodes, ordered under their parents.
+function treeLayout(nodes) {
+  const rows = []; const column = new Map();
+  nodes.forEach(node => { (rows[node.tier] ||= []).push(node); });
+  const slots = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
+  rows.forEach(row => {
+    const anchor = node => { const cols = node.parents.map(id => column.get(id)).filter(value => value !== undefined); return cols.length ? cols.reduce((a, b) => a + b, 0) / cols.length : 1; };
+    row.sort((a, b) => anchor(a) - anchor(b) || a.id - b.id);
+    const places = slots[row.length] || row.map((_, index) => index * 2 / Math.max(1, row.length - 1));
+    row.forEach((node, index) => column.set(node.id, places[index]));
+  });
+  return { rows, column };
+}
+function researchTreeMarkup(tree, selected) {
+  const nodes = nodesInTree(tree);
+  const { rows, column } = treeLayout(nodes);
+  const rowHeight = 118; const tileHeight = 88; const height = rows.length * rowHeight;
+  const x = id => (column.get(id) * 2 + 1) * 100;
+  const y = node => node.tier * rowHeight + rowHeight / 2;
+  const lines = nodes.flatMap(node => node.parents.map(id => { const parent = researchById.get(id); return `<line class="${researchLevel(id) > 0 ? 'done' : ''}" x1="${x(id)}" y1="${y(parent) + tileHeight / 2}" x2="${x(node.id)}" y2="${y(node) - tileHeight / 2}" vector-effect="non-scaling-stroke"/>`; })).join('');
+  const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px"><b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small><i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
+  return `<div class="research-tree" style="height:${height}px"><svg viewBox="0 0 600 ${height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${tiles}</div>`;
+}
+function researchDetail(node) {
+  const level = researchLevel(node.id);
+  const reqs = node.req[Math.min(level, node.max - 1)] || [];
+  const effects = node.effects.map(effect => `<li><b>${escapeHtml(effect.name)}</b><span>${level ? formatEffect(effect.values[level - 1]) : '0'}${level < node.max ? ` → ${formatEffect(effect.values[level])}` : ''} · max ${formatEffect(effect.values[node.max - 1])}</span></li>`).join('');
+  return `<aside class="node-detail" id="nodeDetail"><p class="eyebrow">RESEARCH NODE</p><h2>${escapeHtml(node.name)}</h2>
+    <div class="node-level">${levelControl('research', node.id, level, node.max)}<small>${level >= node.max ? 'Maxed' : `Level ${level} of ${node.max}`}</small></div>
+    ${effects ? `<ul class="node-effects">${effects}</ul>` : ''}
+    ${level < node.max ? `<p class="eyebrow">NEXT LEVEL NEEDS</p><ul class="node-reqs">${reqs.length ? reqs.map(req => `<li class="${requirementMet(req) ? 'met' : ''}">${requirementMet(req) ? '✓' : '✗'} ${escapeHtml(requirementLabel(req))}</li>`).join('') : '<li class="met">✓ Nothing</li>'}</ul>` : ''}
+    ${targetControl('research', String(node.id), level, node.max)}</aside>`;
+}
 function researchPage() {
   pageHeader('TECH LAB', 'Research');
   const selectedId = location.hash.split('/')[1];
@@ -467,16 +520,17 @@ function researchPage() {
     const nodes = nodesInTree(selectedTree);
     const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0);
     const total = nodes.reduce((sum, node) => sum + node.max, 0);
-    return `<section class="page-intro research-intro"><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2><p>${nodes.length} research nodes. Set your current levels and targets.</p>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS</span></div></section>
-      <a class="source-link" href="#research">← All research trees</a>
-      <section class="branch-panel research-nodes">${nodes.map(researchNodeRow).join('')}</section>`;
+    const selected = researchById.get(ui.selectedNode[selectedTree.gameId]) || nodes.find(node => nodeStatus(node) === 'available' || nodeStatus(node) === 'progress') || nodes[0];
+    return `<div class="tree-head"><a class="source-link" href="#research">← All trees</a><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS</span></div></div>
+      <div class="tree-legend"><span class="maxed">Maxed</span><span class="progress">In progress</span><span class="available">Ready to start</span><span class="locked">Locked</span><small>Tap a node to set its level and target.</small></div>
+      <div class="tree-layout">${researchTreeMarkup(selectedTree, selected)}${researchDetail(selected)}</div>`;
   }
 
-  return `<section class="page-intro research-intro"><div><p class="eyebrow">RESEARCH DIRECTORY</p><h2>Choose a research tree</h2><p>Select a category to open its tree.</p></div><div class="completion-ring"><strong>${researchTrees.length}</strong><span>RESEARCH TREES</span></div></section>
+  return `<section class="page-intro research-intro"><div><p class="eyebrow">RESEARCH DIRECTORY</p><h2>Choose a research tree</h2><p>Each tree is laid out from the game data. Open one to set levels node by node.</p></div><div class="completion-ring"><strong>${researchTrees.length}</strong><span>RESEARCH TREES</span></div></section>
     ${bonusPanel()}
     <section class="research-directory" aria-labelledby="research-directory-title">
       <header><div><p class="eyebrow">TECH LAB</p><h2 id="research-directory-title">Research categories</h2></div><span>SELECT A TREE TO OPEN</span></header>
-      <div class="research-tree-grid">${researchTrees.map((tree, index) => { const nodes = nodesInTree(tree); const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0); const total = nodes.reduce((sum, node) => sum + node.max, 0); return `<a class="research-tree-card" href="#research/${tree.id}" aria-label="Open ${escapeHtml(tree.name)} research tree"><div class="research-tree-image" aria-hidden="true"><span>⌬</span><small>${done}/${total}</small></div><div><span>${String(index + 1).padStart(2, '0')}</span><h3>${escapeHtml(tree.name)}</h3><small>${nodes.length} NODES · OPEN TREE →</small></div></a>`; }).join('')}</div>
+      <div class="research-tree-grid">${researchTrees.map((tree, index) => { const nodes = nodesInTree(tree); const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0); const total = nodes.reduce((sum, node) => sum + node.max, 0); return `<a class="research-tree-card" href="#research/${tree.id}" aria-label="Open ${escapeHtml(tree.name)} research tree"><div class="research-tree-image" aria-hidden="true"><span>⌬</span><small>${Math.round(done / total * 100)}%</small></div><div><span>${String(index + 1).padStart(2, '0')}</span><h3>${escapeHtml(tree.name)}</h3><small>${nodes.length} NODES · ${done}/${total} LEVELS →</small>${tree.req.some(req => !requirementMet(req)) ? `<small class="req-note">Needs ${escapeHtml(tree.req.filter(req => !requirementMet(req)).map(requirementLabel).join(', '))}</small>` : ''}</div></a>`; }).join('')}</div>
     </section>`;
 }
 
@@ -506,7 +560,7 @@ function heroCard(item, index, cap) {
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
     <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
-    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}</label><div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>`<label>${slot}<select class="hero-equipment" data-id="${item.id}" data-slot="${slot}">${equipmentQualities.map(quality=>`<option ${progress.equipment[slot]===quality?'selected':''}>${quality}</option>`).join('')}</select></label>`).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div></div>`:''}
+    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>`<label>${slot}<select class="hero-equipment" data-id="${item.id}" data-slot="${slot}">${equipmentQualities.map(quality=>`<option ${progress.equipment[slot]===quality?'selected':''}>${quality}</option>`).join('')}</select></label>`).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div></div>`:''}
   </article>`;
 }
 
@@ -634,6 +688,39 @@ function bindPageControls() {
   document.querySelectorAll('.target-level').forEach(input => input.addEventListener('change', () => {
     const value = Math.max(Number(input.min), Math.min(Number(input.max), Number(input.value) || Number(input.min)));
     state.targets[targetKey(input.dataset.category, input.dataset.item)] = value; save('Target saved'); renderRoute({ keepScroll: true });
+  }));
+  document.querySelectorAll('[data-node]').forEach(button => button.addEventListener('click', () => {
+    const tree = location.hash.split('/')[1];
+    ui.selectedNode[researchTrees.find(item => item.id === tree)?.gameId] = Number(button.dataset.node);
+    renderRoute({ keepScroll: true });
+    if (window.innerWidth < 900) $('#nodeDetail')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  const applyBuildingFilter = () => {
+    const query = ui.buildingSearch.trim().toLowerCase();
+    document.querySelectorAll('.construction-group').forEach(group => {
+      let visible = 0;
+      group.querySelectorAll('.tracker-card').forEach(card => {
+        const show = (!query || card.dataset.search.includes(query)) && !(ui.hideLocked && card.classList.contains('locked'));
+        card.hidden = !show; if (show) visible += 1;
+      });
+      group.hidden = !visible;
+      if (query && visible) group.open = true;
+    });
+  };
+  $('#buildingSearch')?.addEventListener('input', event => { ui.buildingSearch = event.target.value; applyBuildingFilter(); });
+  $('#hideLocked')?.addEventListener('change', event => { ui.hideLocked = event.target.checked; applyBuildingFilter(); });
+  if ($('#buildingSearch')) applyBuildingFilter();
+  document.querySelectorAll('details.construction-group').forEach(group => group.addEventListener('toggle', () => {
+    if (group.open) ui.collapsed.delete(group.dataset.group); else ui.collapsed.add(group.dataset.group);
+  }));
+  document.querySelectorAll('[data-group-target]').forEach(button => button.addEventListener('click', event => {
+    event.preventDefault();
+    const group = constructionGroups.find(item => item.name === button.dataset.groupName);
+    group.buildings.forEach(item => {
+      if (button.dataset.groupTarget === 'max') state.targets[targetKey('building', item.name)] = item.def.max;
+      else delete state.targets[targetKey('building', item.name)];
+    });
+    save(button.dataset.groupTarget === 'max' ? 'Targets set to max' : 'Targets cleared'); renderRoute({ keepScroll: true });
   }));
   $('#bonusForm')?.addEventListener('change', event => {
     const form = event.currentTarget;

@@ -124,7 +124,26 @@ def build_research(progression):
             'req': [compact_requirements(level['prerequisites']) for level in levels],
             'effects': list(effects.values()),
         })
+    add_tree_layout(nodes)
     return trees, nodes
+
+
+def add_tree_layout(nodes):
+    """Give each node its parents in the same tree and a tier (row) for drawing the tree."""
+    by_id = {node['id']: node for node in nodes}
+    for node in nodes:
+        parents = {req[1] for level in node['req'] for req in level if req[0] == 'r'}
+        node['parents'] = sorted(pid for pid in parents if pid in by_id and by_id[pid]['tree'] == node['tree'])
+    tiers = {}
+
+    def tier(node, trail=()):
+        if node['id'] not in tiers:
+            parents = [by_id[pid] for pid in node['parents'] if pid not in trail]
+            tiers[node['id']] = 1 + max((tier(parent, trail + (node['id'],)) for parent in parents), default=-1)
+        return tiers[node['id']]
+
+    for node in nodes:
+        node['tier'] = tier(node)
 
 
 def build_heroes(heroes_raw):
