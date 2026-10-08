@@ -837,6 +837,18 @@ function researchDetail(node) {
     ${targetControl('research', String(node.id), level, node.max)}
     ${node.parents.length ? `<button type="button" class="button secondary path-max" data-path-max="${node.id}">Max this node and every node before it</button>` : ''}</aside>`;
 }
+// Different ways to measure tree progress, to find the one the game uses.
+function progressWays(nodes) {
+  const pct = (part, whole) => whole ? `${Math.round(part / whole * 1000) / 10}%` : '0%';
+  const sum = (pick) => nodes.reduce((acc, node) => { const level = researchLevel(node.id); return [acc[0] + pick(node, level), acc[1] + pick(node, node.max)]; }, [0, 0]);
+  const levels = sum((node, level) => level);
+  const maxed = sum((node, level) => level >= node.max ? 1 : 0);
+  const power = sum((node, level) => level ? node.power[level - 1] || 0 : 0);
+  const powerSum = sum((node, level) => sumRange(node.power, 0, level));
+  const time = sum((node, level) => sumRange(node.time, 0, level));
+  const average = sum((node, level) => level / node.max);
+  return `<p class="progress-ways">Progress by levels ${pct(...levels)} · nodes maxed ${pct(...maxed)} (${maxed[0]}/${maxed[1]}) · power ${pct(...power)} · power summed ${pct(...powerSum)} · research time ${pct(...time)} · average per node ${pct(...average)}</p>`;
+}
 function researchPage() {
   pageHeader('TECH LAB', 'Research');
   const selectedId = location.hash.split('/')[1];
@@ -847,7 +859,7 @@ function researchPage() {
     const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0);
     const total = nodes.reduce((sum, node) => sum + node.max, 0);
     const selected = researchById.get(ui.selectedNode[selectedTree.gameId]) || nodes.find(node => nodeStatus(node) === 'available' || nodeStatus(node) === 'progress') || nodes[0];
-    return `<div class="tree-head"><a class="source-link" href="#research">← All trees</a><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS · ${Math.round(done / total * 100)}%</span></div><div class="completion-ring"><strong>${nodes.filter(node => researchLevel(node.id) >= node.max).length} / ${nodes.length}</strong><span>NODES MAXED · ${Math.round(nodes.filter(node => researchLevel(node.id) >= node.max).length / nodes.length * 100)}%</span></div></div>
+    return `<div class="tree-head"><a class="source-link" href="#research">← All trees</a><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS · ${Math.round(done / total * 100)}%</span></div></div>${progressWays(nodes)}
       ${total > 0 && done >= total ? '<div class="max-banner wide">MAX LEVEL REACHED</div>' : ''}<div class="tree-tools">${autoFillToggle()}<button type="button" class="button secondary" data-tree-max="${selectedTree.gameId}">Max whole tree</button><button type="button" class="button secondary" data-tree-clear="${selectedTree.gameId}">Reset tree to 0</button></div>
       <div class="tree-legend"><span class="maxed">Maxed</span><span class="progress">In progress</span><span class="available">Ready to start</span><span class="locked">Locked</span><small>Tap a node to set its level and target. Press M to max the selected node.</small></div>
       <div class="tree-layout">${researchTreeMarkup(selectedTree, selected)}${researchDetail(selected)}</div>`;
