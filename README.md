@@ -8,11 +8,17 @@ The hero directory is grouped into Warrior, Assault, and Tactical classes and re
 
 Building, research, and hero costs come from the game data in `data/source/`. Every building copy and research node has a level, a target, and a cost panel. With no target set, the panel shows the next level. Unmet requirements for the next level are listed on each card. The **Goal planner** takes a building or research goal and adds every missing prerequisite, then totals the resources and time. Build and research times use your VIP level, your saved research speed bonuses, and any extra bonus you enter.
 
+The **Resources** page shows hourly output from your producer buildings and output research. It also takes your speedup items and shows how much of your planned build and research time they cover. Heroes with an exclusive weapon get a weapon level and target.
+
+Each hero gear slot (SR, SSR or UR) has a level and a target. UR gear continues past level 40 into 25 promotion stages. The Resources page also lists crafting and upgrade costs per gear quality.
+
+The **Fighter** page tracks fighter level and stage (Combat Chips and Fighter Parts) and wingman chip stars (chip copies). Components and evolution are not tracked yet.
+
 Alliance research and survivors are not in the game data yet. Those still use observations you record on the **Upgrade data** tab. Records live in browser storage and can be edited, exported, or imported.
 
 ## Game data
 
-The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, about 5.6 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
+The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, `equipment.json`, `fighter.json`, about 7.5 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
 
 ```bash
 python3 tools/build_game_data.py
