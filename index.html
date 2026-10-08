@@ -17,6 +17,7 @@
       <a class="nav-link" href="#overview" data-route="overview"><span>▦</span> Overview</a>
       <a class="nav-link" href="#construction" data-route="construction"><span>⌂</span> Construction</a>
       <a class="nav-link" href="#research" data-route="research"><span>⌬</span> Research</a>
+      <a class="nav-link" href="#planner" data-route="planner"><span>◎</span> Goal planner</a>
       <a class="nav-link" href="#alliance" data-route="alliance"><span>◇</span> Alliance research</a>
       <a class="nav-link" href="#heroes" data-route="heroes"><span>♙</span> Heroes</a>
       <a class="nav-link" href="#survivors" data-route="survivors"><span>♟</span> Survivors</a>
@@ -76,7 +77,7 @@
       <p class="dialog-copy">Enter the numbers currently shown in game. If bonuses are active, add them below and the database will preserve the observation and estimate the unmodified base values.</p>
       <input name="editIndex" type="hidden" value="">
       <div class="data-fields quick-data-fields">
-        <label>CATEGORY<select name="category"><option value="building">Building</option><option value="research">Research</option><option value="alliance">Alliance research</option><option value="hero-level">Hero level</option><option value="hero-star">Hero star tokens</option><option value="survivor-star">Survivor star tokens</option></select></label>
+        <label>CATEGORY<select name="category"><option value="alliance">Alliance research</option><option value="survivor-star">Survivor star tokens</option></select></label>
         <label>ITEM / RESEARCH NODE<select name="item" required></select></label>
         <label>DESTINATION LEVEL / STEP<input name="level" type="number" min="1" required></label>
         <label>TIME SHOWN (MINUTES)<input name="minutes" type="number" min="0" value="0"></label>
@@ -110,6 +111,7 @@
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="data/game-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
