@@ -204,10 +204,15 @@ def main():
         'skillBooks': skill_curves,
         'starShards': star_shards,
         'starSkillLimit': skill_limits,
-        'producers': {
-            str(item['building_id']): [level['base_output_per_hour'] for level in item['levels']]
-            for item in resources['producer_buildings']
-        },
+        'producers': [{
+            'building': item['building_id'], 'output': item['output_name'],
+            'perHour': [level['base_output_per_hour'] for level in sorted(item['levels'], key=lambda level: level['level'])]
+        } for item in resources['producer_buildings']],
+        'outputBenefits': {'Food': 20001, 'Metal': 20002, 'Oil': 20003},
+        'speedups': [{'category': item['category'], 'name': item['name'], 'minutes': item['duration_minutes']} for item in resources['speedups']],
+        # Gear level L costs gearShards[L - 1] exclusive weapon shards to reach L + 1.
+        'exclusiveGear': {str(gear['hero_id']): {'heroName': gear['hero_name']} for gear in heroes_raw['exclusive_gear']},
+        'gearShards': [step['fragment_count'] for step in sorted(heroes_raw['exclusive_gear_level_curve'], key=lambda step: step['id'])],
     }
     body = json.dumps(data, separators=(',', ':'), ensure_ascii=False)
     OUTPUT.write_text(

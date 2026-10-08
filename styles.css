@@ -58,3 +58,7 @@ details.construction-group>summary{list-style:none;display:flex;align-items:end;
 @media(max-width:900px){.tree-layout{grid-template-columns:1fr}.node-detail{position:static}.tree-node b{font-size:11px}.tree-node{padding:6px}}
 @media(max-width:560px){.tree-head{flex-wrap:wrap}.group-actions{margin-left:0}.tree-legend small{margin-left:0}}
 [hidden]{display:none!important}
+
+/* Production, speedups, exclusive weapons */
+.production-values{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:16px 0 10px}.production-values article{background:#0b100f;border:1px solid #29332f;padding:12px;display:grid;gap:4px}.production-values span{font-size:7px;letter-spacing:1px;color:var(--muted)}.production-values strong{font:700 24px var(--display)}.production-values strong small{font-size:11px;color:var(--muted);margin-left:2px}.production-values small{font-size:8px;color:var(--muted);line-height:1.5}
+.speedup-form{margin:14px 0}.output-note{color:var(--green)!important}.gear-note{font-size:7px;color:var(--muted)}

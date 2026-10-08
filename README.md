@@ -8,6 +8,8 @@ The hero directory is grouped into Warrior, Assault, and Tactical classes and re
 
 Building, research, and hero costs come from the game data in `data/source/`. Every building copy and research node has a level, a target, and a cost panel. With no target set, the panel shows the next level. Unmet requirements for the next level are listed on each card. The **Goal planner** takes a building or research goal and adds every missing prerequisite, then totals the resources and time. Build and research times use your VIP level, your saved research speed bonuses, and any extra bonus you enter.
 
+The **Resources** page shows hourly output from your producer buildings and output research. It also takes your speedup items and shows how much of your planned build and research time they cover. Heroes with an exclusive weapon get a weapon level and target.
+
 Alliance research and survivors are not in the game data yet. Those still use observations you record on the **Upgrade data** tab. Records live in browser storage and can be edited, exported, or imported.
 
 ## Game data
