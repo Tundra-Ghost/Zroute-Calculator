@@ -12,7 +12,9 @@ The **Resources** page shows hourly output from your producer buildings and outp
 
 Each hero gear slot (SR, SSR or UR) has a level and a target. UR gear continues past level 40 into 25 promotion stages. The Resources page also lists crafting and upgrade costs per gear quality.
 
-The **Fighter** page tracks fighter level and stage (Combat Chips and Fighter Parts) and wingman chip stars (chip copies). Components and evolution are not tracked yet.
+The **Roadmap** page lists planned features.
+
+The **Fighter** page tracks fighter level and stage (Combat Chips and Fighter Parts), wingman chip stars (chip copies), component levels and evolution XP.
 
 Alliance research and survivors are not in the game data yet. Those still use observations you record on the **Upgrade data** tab. Records live in browser storage and can be edited, exported, or imported.
 

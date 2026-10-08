@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compact the raw game JSON exports into one small file the app can load.
 
-Reads data/source/progression.json, heroes.json, resources.json,
+Reads data/source/progression.json, heroes.json, resources.json, research_layout.json,
 equipment.json and fighter.json and writes
 data/game-data.js. Run it again whenever the source files change:
 
@@ -17,6 +17,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / 'data' / 'source'
 OUTPUT = ROOT / 'data' / 'game-data.js'
+ICONS = ROOT / 'assets' / 'icons'
+RESOURCE_ICONS = {'food': 'food', 'metal': 'metal', 'oil': 'oil', 'heroExp': 'hero_exp',
+                  'researchData': 'research_data', 'skillBooks': 'skill_book', 'combatChips': 'chips'}
 
 COST_KEYS = {1: 'food', 2: 'metal', 3: 'oil', 5: 'heroExp', 211: 'uranium', 212: 'antibody'}
 ITEM_KEYS = {
@@ -32,7 +35,8 @@ RESOURCE_LABELS = {
     'researchData': 'Research Data', 'heroExp': 'Hero EXP', 'shards': 'Hero Shards', 'skillBooks': 'Skill Books',
     'refiningStone': 'Refining Stone', 'heatGold': 'Heat-resistant Gold', 'composite': 'Composite Material',
     'crystal': 'Conductive Crystal', 'blueprintLegendary': 'Legendary Blueprint', 'blueprintMythic': 'Mythic Blueprint',
-    'combatChips': 'Combat Chips', 'fighterParts': 'Fighter Parts', 'chipCopies': 'Wingman Chip Copies'
+    'combatChips': 'Combat Chips', 'fighterParts': 'Fighter Parts', 'chipCopies': 'Wingman Chip Copies',
+    'componentCopies': 'Lv 1 Component Copies', 'evolutionXp': 'Evolution XP'
 }
 FIGHTER_ITEMS = {'item_drone_data': 'combatChips', 'item_drone_part': 'fighterParts'}
 CHIP_SLOTS = ['Debut', 'Attack', 'Support', 'Defense']
@@ -44,6 +48,12 @@ HERO_TYPE = {1: 'FL', 2: 'S', 3: 'BL'}
 # Untranslated keys, decorations and the vehicle are not player-facing buildings.
 HIDDEN_NAME = re.compile(r'^(buildingname_|decoration_|itemname_|hero_secret|BuildingName_|armed_truck)', re.I)
 DECORATION_CLASS = 40
+
+
+def icon(folder, name):
+    """Path of an icon in assets/icons, or None when it was not imported."""
+    path = ICONS / folder / f'{name}.webp'
+    return f'assets/icons/{folder}/{name}.webp' if path.exists() else None
 
 
 def load(name):
@@ -108,15 +118,19 @@ def build_buildings(progression):
             'power': [level['ability'] for level in levels],
             'cost': cost_columns(levels),
             'req': [compact_requirements(level['prerequisites']) for level in levels],
+            'icon': icon('buildings', raw['id']),
         })
     order = ['HQ', 'Economy', 'Military', 'Development', 'Season']
     buildings.sort(key=lambda item: (order.index(item['group']), item['id']))
     return buildings
 
 
-def build_research(progression):
+def build_research(progression, layout):
+    tree_icons = {tree['id']: tree['icon'] for tree in layout['trees']}
+    node_icons = {tech['id']: tech['icon'] for tree in layout['trees'] for tech in tree['techs']}
     trees = [{
-        'id': tree['id'], 'name': tree['name'], 'req': compact_requirements(tree['prerequisites'])
+        'id': tree['id'], 'name': tree['name'], 'req': compact_requirements(tree['prerequisites']),
+        'icon': icon('research', tree_icons.get(tree['id'], '')),
     } for tree in progression['research_types']]
     nodes = []
     for raw in progression['research']:
@@ -136,6 +150,7 @@ def build_research(progression):
             'cost': cost_columns(levels),
             'req': [compact_requirements(level['prerequisites']) for level in levels],
             'effects': list(effects.values()),
+            'icon': icon('research', node_icons.get(raw['id'], '')),
         })
     add_tree_layout(nodes)
     return trees, nodes
@@ -201,8 +216,24 @@ def build_fighter(raw):
     chips = [{
         'id': int(chip_id), 'name': chip['name'], 'quality': chip['quality'], 'slot': chip['slot'],
         'copies': [chip['stars'][str(star)]['copies'] for star in range(len(chip['stars']) - 1)],
+        'icon': icon('fighter', Path(chip['icon']).stem),
     } for chip_id, chip in sorted(raw['modules'].items(), key=lambda item: int(item[0]))]
-    return {'rows': [[row['level'], row['phase']] for row in rows], 'cost': cost, 'chips': chips, 'chipSlots': CHIP_SLOTS}
+    # Components merge 3 to 1 up to level 8, then level by feeding XP where a
+    # level L piece is worth 3^(L-1) XP. So a level L piece is always worth
+    # 3^(L-1) level 1 copies. componentCost[L] is the cost of going L to L + 1.
+    base = sorted((c for c in raw['components'].values() if c['slot'] == 0 and c['expPercentage'] == 0), key=lambda c: c['level'])
+    component_cost = [1] + [2 * 3 ** (c['level'] - 1) for c in base[:-1]]
+    # Evolution level E costs evolution[E] XP to reach E + 1. Activation (0 to 1) is not in the data.
+    evolution = [0] * (len(raw['evolution']) + 1)
+    for key, step in raw['evolution'].items():
+        evolution[int(key)] = step['progressTotal']
+    return {'rows': [[row['level'], row['phase']] for row in rows], 'cost': cost, 'chips': chips, 'chipSlots': CHIP_SLOTS,
+            'componentSlots': [slot['name'] for slot in sorted(raw['slots'], key=lambda slot: slot['slot'])],
+            # Icon per slot for levels 1-2, 3-4, 5-7 and 8+.
+            'componentIcons': [[icon('fighter', Path(c['icon']).stem) for c in sorted(
+                (c for c in raw['components'].values() if c['slot'] == slot['slot'] and c['expPercentage'] == 0), key=lambda c: c['level'])]
+                for slot in sorted(raw['slots'], key=lambda slot: slot['slot'])],
+            'componentCost': component_cost, 'evolutionXp': evolution[:-1]}
 
 
 def build_heroes(heroes_raw):
@@ -224,6 +255,7 @@ def build_heroes(heroes_raw):
             'maxLevel': raw['max_level'],
             'expCurve': str(raw['level_curve_id']),
             'skillCurve': str(raw['quality']),
+            'icon': icon('heroes', raw['id']),
         })
     class_order = ['Warrior', 'Assault', 'Tactical']
     rarity_order = ['SR', 'SSR', 'UR']
@@ -249,12 +281,13 @@ def main():
     resources = load('resources.json')
     equipment = load('equipment.json')
     fighter = load('fighter.json')
-    trees, research = build_research(progression)
+    trees, research = build_research(progression, load('research_layout.json'))
     heroes, exp_curves, skill_curves, star_shards, skill_limits = build_heroes(heroes_raw)
     modifiers = progression['construction_modifiers']
     data = {
         'version': 1,
         'resources': RESOURCE_LABELS,
+        'resourceIcons': {key: icon('ui', name) for key, name in RESOURCE_ICONS.items()},
         'vipBuildingSpeed': modifiers['vip_building_speed_percent_by_level'],
         'benefitTypes': {'buildingSpeed': 20005, 'researchSpeed': 20008, 'buildingCost': 20007},
         'buildings': build_buildings(progression),
@@ -272,7 +305,7 @@ def main():
         'outputBenefits': {'Food': 20001, 'Metal': 20002, 'Oil': 20003},
         'speedups': [{'category': item['category'], 'name': item['name'], 'minutes': item['duration_minutes']} for item in resources['speedups']],
         # Gear level L costs gearShards[L - 1] exclusive weapon shards to reach L + 1.
-        'exclusiveGear': {str(gear['hero_id']): {'heroName': gear['hero_name']} for gear in heroes_raw['exclusive_gear']},
+        'exclusiveGear': {str(gear['hero_id']): {'heroName': gear['hero_name'], 'icon': icon('weapons', f"weapon_{gear['hero_id']}")} for gear in heroes_raw['exclusive_gear']},
         'gear': build_gear(equipment),
         'fighter': build_fighter(fighter),
         'gearShards': [step['fragment_count'] for step in sorted(heroes_raw['exclusive_gear_level_curve'], key=lambda step: step['id'])],

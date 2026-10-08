@@ -7,7 +7,7 @@ const GAME = window.ZROUTE_DATA || {
   resources: {}, vipBuildingSpeed: [], benefitTypes: {}, buildings: [], researchTrees: [], research: [],
   heroes: [], heroExp: {}, skillBooks: {}, starShards: [], starSkillLimit: [],
   producers: [], outputBenefits: {}, speedups: [], exclusiveGear: {}, gearShards: [], gear: [],
-  fighter: { rows: [[1, 0]], cost: {}, chips: [], chipSlots: [] }
+  fighter: { rows: [[1, 0]], cost: {}, chips: [], chipSlots: [], componentSlots: [], componentCost: [], evolutionXp: [] }
 };
 
 const buildingIcons = {
@@ -32,6 +32,7 @@ const buildingSlot = name => buildings.find(item => item.name === name);
 const buildingDefById = new Map(GAME.buildings.map(def => [def.id, def]));
 const slotsByDefId = id => buildings.filter(item => item.def.id === id);
 
+const iconImg = (src, className = 'game-icon') => src ? `<img class="${className}" src="${src}" alt="" loading="lazy">` : '';
 const slug = value => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const researchTrees = GAME.researchTrees.map(tree => ({ ...tree, gameId: tree.id, id: slug(tree.name) }));
 const researchNodes = GAME.research;
@@ -53,14 +54,14 @@ const typeNames = { FL: 'Frontline', BL: 'Backline', S: 'Support' };
 const survivorRarities = ['Other', 'SSR', 'Mythic'];
 // Observation records keep their original fields. Plan totals use the wider list.
 const resourceNames = ['food', 'metal', 'oil', 'shards', 'tokens'];
-const planResources = ['food', 'metal', 'oil', 'uranium', 'antibody', 'researchData', 'heroExp', 'shards', 'skillBooks', 'gearShards', 'refiningStone', 'heatGold', 'composite', 'crystal', 'blueprintLegendary', 'blueprintMythic', 'combatChips', 'fighterParts', 'chipCopies', 'tokens'];
+const planResources = ['food', 'metal', 'oil', 'uranium', 'antibody', 'researchData', 'heroExp', 'shards', 'skillBooks', 'gearShards', 'refiningStone', 'heatGold', 'composite', 'crystal', 'blueprintLegendary', 'blueprintMythic', 'combatChips', 'fighterParts', 'chipCopies', 'componentCopies', 'evolutionXp', 'tokens'];
 const resourceTitles = { ...GAME.resources, shards: 'Shards', gearShards: 'Weapon Shards', tokens: 'Tokens' };
 const emptyResources = () => Object.fromEntries(planResources.map(name => [name, 0]));
 const powerFields = ['heroLevel', 'heroSkill', 'heroAttributes', 'heroStars', 'gear', 'hallOfLegends', 'exclusiveWeapons', 'soldier', 'building', 'survivor', 'tech', 'fighterLevel', 'fighterComponent', 'wingman'];
 const emptyPower = () => Object.fromEntries(powerFields.map(name => [name, 0]));
 const bonusFields = ['vipLevel', 'buildingSpeed', 'researchSpeed'];
 const emptyBonuses = () => Object.fromEntries(bonusFields.map(name => [name, 0]));
-const dataCategories = ['building', 'research', 'hero-level', 'hero-star', 'hero-skill', 'hero-gear', 'hero-equip', 'fighter-level', 'fighter-chip'];
+const dataCategories = ['building', 'research', 'hero-level', 'hero-star', 'hero-skill', 'hero-gear', 'hero-equip', 'fighter-level', 'fighter-chip', 'fighter-component', 'fighter-evolution'];
 // Gear quality N in the data is equipmentQualities[N - 1]. R gear cannot be crafted or upgraded.
 const gearByQuality = new Map(GAME.gear.map(table => [equipmentQualities[table.quality - 1], table]));
 // Gear crafting materials merge 4 to 1: Steel, Steel Component, Heat-resistant Gold, Composite Material, Conductive Crystal.
@@ -93,7 +94,7 @@ const defaults = {
   upgradeRecords: [],
   speedups: {},
   targets: {},
-  fighter: { row: 1, chips: GAME.fighter.chipSlots.map(() => ({ id: 0, star: 0 })) }
+  fighter: { row: 1, chips: GAME.fighter.chipSlots.map(() => ({ id: 0, star: 0 })), components: GAME.fighter.componentSlots.map(() => 0), evolution: 0 }
 };
 
 // Building names used before the game data was added.
@@ -129,7 +130,9 @@ function loadState() {
       targets: saved.targets && typeof saved.targets === 'object' ? saved.targets : {},
       fighter: {
         row: Math.max(1, Math.min(fighterRows.length, Number(saved.fighter?.row) || 1)),
-        chips: defaults.fighter.chips.map((empty, slot) => ({ ...empty, ...saved.fighter?.chips?.[slot] }))
+        chips: defaults.fighter.chips.map((empty, slot) => ({ ...empty, ...saved.fighter?.chips?.[slot] })),
+        components: defaults.fighter.components.map((empty, slot) => Number(saved.fighter?.components?.[slot]) || empty),
+        evolution: Number(saved.fighter?.evolution) || 0
       }
     };
   } catch { return structuredClone(defaults); }
@@ -288,6 +291,8 @@ function dataPlan(category, item, current, target) {
   if (category === 'building') { const slotItem = buildingSlot(item); return slotItem && tableCost(slotItem.def, current, target, { speed: bonus.building, costCut: bonus.buildingCost }); }
   if (category === 'research') { const node = researchById.get(Number(item)); return node && tableCost(node, current, target, { speed: bonus.research }); }
   if (category === 'fighter-level') return tableCost(GAME.fighter, current, target);
+  if (category === 'fighter-component') return { resources: { ...emptyResources(), componentCopies: sumRange(GAME.fighter.componentCost, current, target) }, seconds: 0 };
+  if (category === 'fighter-evolution') return { resources: { ...emptyResources(), evolutionXp: sumRange(GAME.fighter.evolutionXp, current, target) }, seconds: 0 };
   if (category === 'fighter-chip') {
     const chip = fighterChip(Number(item)); if (!chip) return null;
     const result = { resources: emptyResources(), seconds: 0 };
@@ -342,6 +347,8 @@ function planObjectives() {
       ];
     }),
     ...(fighterRows.length > 1 ? [objective('fighter-level', 'fighter', state.fighter.row, fighterRows.length)] : []),
+    ...state.fighter.components.map((level, slot) => objective('fighter-component', String(slot), level, GAME.fighter.componentCost.length)),
+    ...(GAME.fighter.evolutionXp.length ? [objective('fighter-evolution', 'evolution', state.fighter.evolution, GAME.fighter.evolutionXp.length)] : []),
     ...state.fighter.chips.flatMap((saved, slot) => { const chip = fighterChip(slot); return chip?.copies.length ? [objective('fighter-chip', String(slot), Number(saved.star) || 0, chip.copies.length)] : []; }),
     ...Object.values(allianceBranches).flat().map(name => objective('alliance', name, Number(state.alliance[name]) || 0, 30)),
     ...state.survivors.map(raw => { const item = survivorProgress(raw); return objective('survivor-star', item.id, Number(item.starSteps) || 0, 25); })
@@ -390,7 +397,7 @@ function resourceLabel(name, category, item) {
   return `${rarity || ''} SHARDS`.trim();
 }
 function costChips(plan, category, item) {
-  return shownResources(plan.resources, []).map(name => `<span><b>${formatNumber(plan.resources[name])}</b> ${resourceLabel(name, category, item)}</span>`).join('') + (plan.seconds ? `<span><b>${formatDuration(plan.seconds)}</b> TIME</span>` : '');
+  return shownResources(plan.resources, []).map(name => `<span>${iconImg(GAME.resourceIcons?.[name], 'chip-icon')}<b>${formatNumber(plan.resources[name])}</b> ${resourceLabel(name, category, item)}</span>`).join('') + (plan.seconds ? `<span><b>${formatDuration(plan.seconds)}</b> TIME</span>` : '');
 }
 function planSummary(category, item, current, target, max = target) {
   if (target <= current) {
@@ -587,7 +594,7 @@ function buildingCard(item) {
   const { name, description, icon, def } = item;
   const level = Number(state.buildings[name]) || 0;
   const locked = isLocked(item);
-  return `<article class="tracker-card ${locked ? 'locked' : ''}" data-search="${escapeHtml(name.toLowerCase())}"><div class="tracker-icon">${icon}</div><div class="tracker-copy"><h3>${escapeHtml(name)}${locked ? ' <small class="lock-tag">LOCKED</small>' : ''}</h3><p>${escapeHtml(description)} · max ${def.max}</p>${(() => { const out = slotOutput(item); return out ? `<p class="output-note">Produces ${formatNumber(out.perHour)} ${escapeHtml(out.output)}/hr</p>` : ''; })()}${level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', name, level, def.max)}${def.max > 1 ? targetControl('building', name, level, def.max) : planSummary('building', name, level, level, def.max)}</article>`;
+  return `<article class="tracker-card ${locked ? 'locked' : ''}" data-search="${escapeHtml(name.toLowerCase())}"><div class="tracker-icon">${def.icon ? iconImg(def.icon) : icon}</div><div class="tracker-copy"><h3>${escapeHtml(name)}${locked ? ' <small class="lock-tag">LOCKED</small>' : ''}</h3><p>${escapeHtml(description)} · max ${def.max}</p>${(() => { const out = slotOutput(item); return out ? `<p class="output-note">Produces ${formatNumber(out.perHour)} ${escapeHtml(out.output)}/hr</p>` : ''; })()}${level < def.max ? nextLevelNeeds(def.req[level]) : ''}</div>${levelControl('buildings', name, level, def.max)}${def.max > 1 ? targetControl('building', name, level, def.max) : planSummary('building', name, level, level, def.max)}</article>`;
 }
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
@@ -625,14 +632,14 @@ function researchTreeMarkup(tree, selected) {
   const x = id => (column.get(id) * 2 + 1) * 100;
   const y = node => node.tier * rowHeight + rowHeight / 2;
   const lines = nodes.flatMap(node => node.parents.map(id => { const parent = researchById.get(id); return `<line class="${researchLevel(id) > 0 ? 'done' : ''}" x1="${x(id)}" y1="${y(parent) + tileHeight / 2}" x2="${x(node.id)}" y2="${y(node) - tileHeight / 2}" vector-effect="non-scaling-stroke"/>`; })).join('');
-  const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px"><b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small><i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
+  const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px">${iconImg(node.icon, 'node-icon')}<b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small><i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
   return `<div class="research-tree" style="height:${height}px"><svg viewBox="0 0 600 ${height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${tiles}</div>`;
 }
 function researchDetail(node) {
   const level = researchLevel(node.id);
   const reqs = node.req[Math.min(level, node.max - 1)] || [];
   const effects = node.effects.map(effect => `<li><b>${escapeHtml(effect.name)}</b><span>${level ? formatEffect(effect.values[level - 1]) : '0'}${level < node.max ? ` → ${formatEffect(effect.values[level])}` : ''} · max ${formatEffect(effect.values[node.max - 1])}</span></li>`).join('');
-  return `<aside class="node-detail" id="nodeDetail"><p class="eyebrow">RESEARCH NODE</p><h2>${escapeHtml(node.name)}</h2>
+  return `<aside class="node-detail" id="nodeDetail"><p class="eyebrow">RESEARCH NODE</p><h2>${iconImg(node.icon, 'detail-icon')}${escapeHtml(node.name)}</h2>
     <div class="node-level">${levelControl('research', node.id, level, node.max)}<small>${level >= node.max ? 'Maxed' : `Level ${level} of ${node.max}`}</small></div>
     ${effects ? `<ul class="node-effects">${effects}</ul>` : ''}
     ${level < node.max ? `<p class="eyebrow">NEXT LEVEL NEEDS</p><ul class="node-reqs">${reqs.length ? reqs.map(req => `<li class="${requirementMet(req) ? 'met' : ''}">${requirementMet(req) ? '✓' : '✗'} ${escapeHtml(requirementLabel(req))}</li>`).join('') : '<li class="met">✓ Nothing</li>'}</ul>` : ''}
@@ -657,7 +664,7 @@ function researchPage() {
     ${bonusPanel()}
     <section class="research-directory" aria-labelledby="research-directory-title">
       <header><div><p class="eyebrow">TECH LAB</p><h2 id="research-directory-title">Research categories</h2></div><span>SELECT A TREE TO OPEN</span></header>
-      <div class="research-tree-grid">${researchTrees.map((tree, index) => { const nodes = nodesInTree(tree); const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0); const total = nodes.reduce((sum, node) => sum + node.max, 0); return `<a class="research-tree-card" href="#research/${tree.id}" aria-label="Open ${escapeHtml(tree.name)} research tree"><div class="research-tree-image" aria-hidden="true"><span>⌬</span><small>${Math.round(done / total * 100)}%</small></div><div><span>${String(index + 1).padStart(2, '0')}</span><h3>${escapeHtml(tree.name)}</h3><small>${nodes.length} NODES · ${done}/${total} LEVELS →</small>${tree.req.some(req => !requirementMet(req)) ? `<small class="req-note">Needs ${escapeHtml(tree.req.filter(req => !requirementMet(req)).map(requirementLabel).join(', '))}</small>` : ''}</div></a>`; }).join('')}</div>
+      <div class="research-tree-grid">${researchTrees.map((tree, index) => { const nodes = nodesInTree(tree); const done = nodes.reduce((sum, node) => sum + researchLevel(node.id), 0); const total = nodes.reduce((sum, node) => sum + node.max, 0); return `<a class="research-tree-card" href="#research/${tree.id}" aria-label="Open ${escapeHtml(tree.name)} research tree"><div class="research-tree-image" aria-hidden="true">${tree.icon ? iconImg(tree.icon) : '<span>⌬</span>'}<small>${Math.round(done / total * 100)}%</small></div><div><span>${String(index + 1).padStart(2, '0')}</span><h3>${escapeHtml(tree.name)}</h3><small>${nodes.length} NODES · ${done}/${total} LEVELS →</small>${tree.req.some(req => !requirementMet(req)) ? `<small class="req-note">Needs ${escapeHtml(tree.req.filter(req => !requirementMet(req)).map(requirementLabel).join(', '))}</small>` : ''}</div></a>`; }).join('')}</div>
     </section>`;
 }
 
@@ -676,14 +683,39 @@ function fighterPage() {
     const saved = state.fighter.chips[slot]; const chip = fighterChip(slot);
     const options = `<option value="0">None</option>${GAME.fighter.chips.filter(item => item.slot === slot).map(item => `<option value="${item.id}" ${item.id === chip?.id ? 'selected' : ''}>${escapeHtml(item.name)}</option>`).join('')}`;
     const stars = chip?.copies.length ? `<label>STARS<input class="fighter-chip-star" data-slot="${slot}" type="number" min="0" max="${chip.copies.length}" value="${Number(saved.star) || 0}"></label>${targetControl('fighter-chip', String(slot), Number(saved.star) || 0, chip.copies.length, 'TARGET STARS')}` : chip ? '<small>This chip has no star upgrades.</small>' : '';
-    return `<article class="gear-slot"><label>${slotName.toUpperCase()} CHIP<select class="fighter-chip" data-slot="${slot}">${options}</select></label>${stars}</article>`;
+    return `<article class="gear-slot">${iconImg(chip?.icon, 'slot-icon')}<label>${slotName.toUpperCase()} CHIP<select class="fighter-chip" data-slot="${slot}">${options}</select></label>${stars}</article>`;
   }).join('');
-  return `<section class="page-intro"><div><p class="eyebrow">FIGHTER</p><h2>Fighter level and wingman chips</h2><p>Set your fighter level and stage as the game shows it, then pick a target. Every 5th level, and every level after 150, has five key upgrade stages that also cost Fighter Parts.</p></div></section>
+  const componentMax = GAME.fighter.componentCost.length;
+  const components = GAME.fighter.componentSlots.map((name, slot) => {
+    const level = state.fighter.components[slot];
+    const art = GAME.fighter.componentIcons?.[slot]?.[Math.max(0, level - 1)];
+    return `<article class="gear-slot">${iconImg(art, 'slot-icon')}<label>${escapeHtml(name.toUpperCase())}<input class="fighter-component" data-slot="${slot}" type="number" min="0" max="${componentMax}" value="${level}"></label>${targetControl('fighter-component', String(slot), level, componentMax)}</article>`;
+  }).join('');
+  return `<section class="page-intro"><div><p class="eyebrow">FIGHTER</p><h2>Fighter planner</h2><p>Set your fighter level and stage as the game shows it, then pick a target. Every 5th level, and every level after 150, has five key upgrade stages that also cost Fighter Parts.</p></div></section>
     <section class="grand-plan"><header><div><p class="eyebrow">FIGHTER LEVEL</p><h2>${fighterRowLabel(current)}</h2></div></header>
       <div class="fighter-level"><label>CURRENT<select id="fighterRow">${rowOptions(current)}</select></label><label>TARGET<select id="fighterTarget">${rowOptions(target, current)}</select></label></div>
       ${planSummary('fighter-level', 'fighter', current, target, max)}
       <p>Assumes no bonus progress. Lucky bonus clicks make real costs lower.</p></section>
-    <section class="grand-plan"><header><div><p class="eyebrow">WINGMAN CHIPS</p><h2>Chip stars</h2></div></header><div class="gear-tables">${chips}</div><p>Star upgrades cost copies of the same chip. Components and evolution are not tracked yet.</p></section>`;
+    <section class="grand-plan"><header><div><p class="eyebrow">COMPONENTS</p><h2>Component levels</h2></div></header><div class="gear-tables">${components}</div><p>Level 0 means the slot is empty. Up to level 8, three pieces merge into one. After that, pieces are fed as XP. Costs are shown as Lv 1 component copies: a level L piece counts as 3^(L-1) copies.</p></section>
+    <section class="grand-plan"><header><div><p class="eyebrow">EVOLUTION</p><h2>Evolution level</h2></div></header><div class="gear-tables"><article class="gear-slot"><label>LEVEL<input class="fighter-evolution" type="number" min="0" max="${GAME.fighter.evolutionXp.length}" value="${state.fighter.evolution}"></label>${targetControl('fighter-evolution', 'evolution', state.fighter.evolution, GAME.fighter.evolutionXp.length)}</article></div><p>Level 0 means not activated. The activation cost and which items give evolution XP are not in the data.</p></section>
+    <section class="grand-plan"><header><div><p class="eyebrow">WINGMAN CHIPS</p><h2>Chip stars</h2></div></header><div class="gear-tables">${chips}</div><p>Star upgrades cost copies of the same chip. </p></section>`;
+}
+
+// Planned features. Status is Planned, Needs data (blocked on a data source), or Idea.
+const roadmap = [
+  { title: 'Server tracker', status: 'Planned', text: 'Track server activity: player counts, top power, new arrivals, and the event schedule for your server.', needs: 'A shared database that members or a bot feed, since the site has no server access on its own.' },
+  { title: 'Alliance tracker', status: 'Planned', text: 'Track your alliance power, membership, and joins and leaves over time. Members can sync their base stats to show alliance totals and averages.', needs: 'Member sync through a shared database.' },
+  { title: 'VS tracker', status: 'Planned', text: 'Record VS scores per day and per member, show participation history, and flag missed days.', needs: 'Daily score entry or screenshot import.' },
+  { title: 'Inventory and "can I afford it"', status: 'Idea', text: 'Enter what you own (resources, speedups, gear materials, chips) and see what is left to farm for each target, plus how long your production takes to cover it.' },
+  { title: 'Event calendar', status: 'Idea', text: 'Upcoming events and season unlocks with reminders, so you save speedups and resources for the right day.' },
+  { title: 'Share and compare plans', status: 'Idea', text: 'Export your profile as a link so alliance leaders can see member progress and compare plans.' },
+  { title: 'Formation builder', status: 'Idea', text: 'Build squads from your roster and compare hero power, classes, and gear.' },
+  { title: 'Alliance research and survivors', status: 'Needs data', text: 'Replace the manual observation pages with full cost tables once the game data is found.' }
+];
+function roadmapPage() {
+  pageHeader('PLANNING', 'Roadmap');
+  return `<section class="page-intro"><div><p class="eyebrow">ROADMAP</p><h2>Planned features</h2><p>What is coming next. Have an idea? Tell the site owner.</p></div></section>
+    <section class="roadmap">${roadmap.map(item => `<article><header><h3>${escapeHtml(item.title)}</h3><i class="status ${slug(item.status)}">${escapeHtml(item.status)}</i></header><p>${escapeHtml(item.text)}</p>${item.needs ? `<small>Needs: ${escapeHtml(item.needs)}</small>` : ''}</article>`).join('')}</section>`;
 }
 
 function heroesPage() {
@@ -706,8 +738,8 @@ function heroCard(item, index, cap) {
     return `<div class="skill-row"><label>SKILL ${slot}<input class="hero-skill" data-id="${item.id}" data-slot="${slot}" type="number" min="1" max="${limit}" value="${level}"></label>${targetControl('hero-skill', `${item.id}|${slot}`, level, skillMax)}</div>`;
   }).join('');
   return `<article class="hero-card ${owned?'owned':''}" data-rarity="${item.rarity}">
-    <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
-    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div>`:''}
+    <div class="hero-summary"><div class="hero-portrait"><span>${String(index+1).padStart(2,'0')}</span>${item.icon ? iconImg(item.icon, 'hero-head') : item.name[0]}</div><div class="hero-identity"><div class="hero-badges"><i class="rarity ${item.rarity}">${item.rarity}</i><i>${item.type} · ${typeNames[item.type]}</i></div><h3>${item.name}${item.promoted?'<small>PROMOTED</small>':''}</h3><button data-hero="${item.id}">${owned?'✓ IN MY ROSTER':'+ ADD TO ROSTER'}</button></div></div>
+    ${owned?`<div class="hero-details"><label>HERO LEVEL <input class="hero-level" data-id="${item.id}" type="number" min="1" max="${cap}" value="${Math.min(progress.level,cap)}"><small>/ ${cap}</small></label>${targetControl('hero-level', item.id, progress.level, item.maxLevel)}<div class="star-field"><span>STAR POWER</span>${starPicker(item.id, progress.starSteps)}<b>${stars} ★ · ${shardsUsed(progress.starSteps)} shards invested</b>${targetControl('hero-star', item.id, progress.starSteps, 25, 'TARGET STEP')}</div><div class="equipment"><span>EQUIPMENT</span>${equipmentSlots.map(slot=>equipmentControl(item, progress, slot)).join('')}</div><div class="skills"><span>SKILLS · CAP ${limit} AT ${stars} ★</span>${skills}</div>${hasGear(item) ? `<div class="skills gear"><span>${iconImg(GAME.exclusiveGear[item.gameId]?.icon, 'inline-icon')}EXCLUSIVE WEAPON</span><div class="skill-row"><label>LEVEL<input class="hero-gear" data-id="${item.id}" type="number" min="0" max="${gearMax()}" value="${Number(progress.gear) || 0}"></label>${targetControl('hero-gear', item.id, Number(progress.gear) || 0, gearMax())}</div><small class="gear-note">Level 0 means not unlocked. Unlock cost is not in the data.</small></div>` : ''}</div>`:''}
   </article>`;
 }
 
@@ -783,6 +815,7 @@ const pages = {
   alliance: () => branchPage('alliance', 'Alliance research', 'Record shared technology levels exactly as they appear for your alliance.', allianceBranches),
   heroes: heroesPage,
   fighter: fighterPage,
+  roadmap: roadmapPage,
   survivors: survivorsPage,
   filter: filterPage,
   data: dataPage
@@ -841,6 +874,14 @@ function bindPageControls() {
     delete state.targets[targetKey('fighter-chip', select.dataset.slot)];
     save('Chip saved'); renderRoute({ keepScroll: true });
   }));
+  document.querySelectorAll('.fighter-component').forEach(input => input.addEventListener('change', () => {
+    state.fighter.components[input.dataset.slot] = Math.max(0, Math.min(Number(input.max), Number(input.value) || 0));
+    save('Component saved'); renderRoute({ keepScroll: true });
+  }));
+  $('.fighter-evolution')?.addEventListener('change', event => {
+    state.fighter.evolution = Math.max(0, Math.min(Number(event.target.max), Number(event.target.value) || 0));
+    save('Evolution saved'); renderRoute({ keepScroll: true });
+  });
   document.querySelectorAll('.fighter-chip-star').forEach(input => input.addEventListener('change', () => {
     state.fighter.chips[input.dataset.slot].star = Math.max(0, Math.min(Number(input.max), Number(input.value) || 0));
     save('Chip stars saved'); renderRoute({ keepScroll: true });
