@@ -493,13 +493,14 @@ function targetControl(category, item, current, max = 30, label = 'TARGET') {
   const target = maxed ? max : hasGoal ? Math.min(max, Number(saved)) : current + 1;
   return `<div class="target-plan"><label>${label}<input class="target-level" data-category="${category}" data-item="${escapeHtml(item)}" type="number" min="${maxed ? max : current + 1}" max="${max}" value="${target}" ${maxed ? 'disabled' : ''}></label>${planSummary(category, item, current, hasGoal ? target : current, max)}</div>`;
 }
-const gearGlyphs = { Rifle: '🔫', Scope: '🔭', Helmet: '⛑️', 'Bullet Proof Vest': '🦺' };
+// Gear art cropped from in-game UR gear. Other qualities reuse it, recolored with CSS.
+const gearIcons = { Rifle: 'assets/icons/gear/ur_rifle.webp', Scope: 'assets/icons/gear/ur_scope.webp', Helmet: 'assets/icons/gear/ur_helmet.webp', 'Bullet Proof Vest': 'assets/icons/gear/ur_vest.webp' };
 function equipmentControl(hero, progress, slot) {
   const quality = progress.equipment[slot] || 'None';
   const table = gearByQuality.get(quality);
   const tier = equipmentQualities.indexOf(quality);
   const select = `<select class="hero-equipment" data-id="${hero.id}" data-slot="${slot}">${equipmentQualities.map(option => `<option ${quality === option ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
-  const head = `<span class="gear-icon q${tier}" aria-hidden="true">${gearGlyphs[slot] || '⚙'}</span><label class="gear-quality">${slot.toUpperCase()}${select}</label>`;
+  const head = `<span class="gear-icon q${tier}" aria-hidden="true">${iconImg(gearIcons[slot], 'gear-art')}</span><label class="gear-quality">${slot.toUpperCase()}${select}</label>`;
   if (!table) return `<div class="gear-row">${head}<small class="gear-row-note">${tier === 1 ? 'R gear cannot be upgraded.' : 'Pick a quality to plan upgrades.'}</small></div>`;
   const level = gearLevel(progress, slot, table);
   const item = `${hero.id}|${slot}`;

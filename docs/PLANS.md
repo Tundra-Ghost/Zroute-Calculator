@@ -40,4 +40,4 @@ Upload game screenshots (building list, research tree, hero screen, resource tot
 - Hero level cap per HQ is inferred.
 - Flat cost cut units (treated as a fixed amount per level) and the research "Barracks" copy (mapped to Soldier Training Camp) are inferred.
 - Uranium and antibody have no icons.
-- Gear slot icons are placeholders.
+- Gear icons: UR art is cropped from Tanner's screenshot. SR and SSR reuse it, recolored. Need SR/SSR gear screenshots for the real art.

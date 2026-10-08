@@ -28,7 +28,7 @@ Newest first. Dates are when the change went live on `main`.
 - Hero management has **Level Up**, **Skill** and **Star Up** tabs, like the game.
 - Skills sit in a 2×2 grid with icon, level badge, name, type, cooldown, effect and the five star bonuses. The Specialty skill stays at level 1.
 - Star power shows the step out of 25 and takes shards invested as input.
-- Gear slots are one row each: quality icon, quality, level, target.
+- Gear slots are one row each: game icon, quality, level, target. UR art comes from an in-game screenshot.
 - Aria SSR can be promoted to Aria UR at 5 ★. Stars restart at 3 ★ and each step costs double shards.
 
 ### Overview, planner and fighter
