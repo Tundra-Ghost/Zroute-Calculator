@@ -114,6 +114,8 @@ const defaults = {
   speedups: {},
   targets: {},
   // "Everything to max" what-ifs. Ministers add speed; the ignore switches drop bonuses.
+  // autoFill: raising a level also raises the prerequisites it needed.
+  prefs: { autoFill: true },
   maxOptions: { buildMinister: 0, researchMinister: 0, ignoreResearch: false, ignoreVip: false, ignoreOther: false },
   fighter: { row: 1, chips: GAME.fighter.chipSlots.map(() => ({ id: 0, star: 0 })), components: GAME.fighter.componentSlots.map(() => 0), evolution: 0 }
 };
@@ -150,6 +152,7 @@ function loadState() {
       speedups: saved.speedups && typeof saved.speedups === 'object' ? saved.speedups : {},
       targets: saved.targets && typeof saved.targets === 'object' ? saved.targets : {},
       maxOptions: { ...defaults.maxOptions, ...saved.maxOptions },
+      prefs: { ...defaults.prefs, ...saved.prefs },
       fighter: {
         row: Math.max(1, Math.min(fighterRows.length, Number(saved.fighter?.row) || 1)),
         chips: defaults.fighter.chips.map((empty, slot) => ({ ...empty, ...saved.fighter?.chips?.[slot] })),
@@ -508,7 +511,8 @@ function starPicker(id, steps, ownerType = 'hero') {
 
 /* ---------- Goal planner: a target plus every prerequisite it needs ---------- */
 
-function planGoal(kind, id, level) {
+// Walks requirements recursively. need maps 'b:id' / 'r:id' to the level it must reach.
+function prereqSolver() {
   const need = new Map();
   const currentOf = key => key.startsWith('b:') ? buildingLevel(Number(key.slice(2))) : researchLevel(Number(key.slice(2)));
   const plannedOf = key => Math.max(currentOf(key), need.get(key) || 0);
@@ -524,6 +528,10 @@ function planGoal(kind, id, level) {
     const from = plannedOf(key); const to = Math.min(target, table.max);
     if (to <= from) return;
     need.set(key, to);
+    requireLevels(table, from, to);
+  };
+  // Every requirement for levels from+1..to of one building or research.
+  const requireLevels = (table, from, to) => {
     for (let next = from + 1; next <= to; next += 1) {
       (table.req[next - 1] || []).forEach(req => {
         if (satisfied(req)) return;
@@ -534,6 +542,45 @@ function planGoal(kind, id, level) {
       });
     }
   };
+  return { need, currentOf, require, requireLevels };
+}
+// Levels another item must have had for this one to reach its level. Never lowers anything.
+function fillPrerequisites(items) {
+  const solver = prereqSolver();
+  items.forEach(([kind, id, level]) => {
+    const table = kind === 'b' ? buildingDefById.get(Number(id)) : researchById.get(Number(id));
+    if (table) solver.requireLevels(table, 0, Math.min(level, table.max));
+  });
+  let changed = 0;
+  solver.need.forEach((level, key) => {
+    const id = Number(key.slice(2));
+    if (key.startsWith('b:')) {
+      const slot = slotsByDefId(id).sort((a, b) => (Number(state.buildings[b.name]) || 0) - (Number(state.buildings[a.name]) || 0))[0];
+      if (slot && (Number(state.buildings[slot.name]) || 0) < level) { state.buildings[slot.name] = level; changed += 1; }
+    } else if (researchLevel(id) < level) { state.research[id] = level; changed += 1; }
+  });
+  return changed;
+}
+function everythingSet() {
+  return [...buildings.map(item => ['b', item.def.id, Number(state.buildings[item.name]) || 0]), ...Object.entries(state.research).map(([id, level]) => ['r', Number(id), Number(level) || 0])].filter(item => item[2] > 0);
+}
+// Saves, fills prerequisites when that is on, and offers an undo.
+function commitLevels(before, message, seeds) {
+  const filled = state.prefs.autoFill && seeds.length ? fillPrerequisites(seeds) : 0;
+  save(filled ? `${message}. Filled ${filled} prerequisite${filled === 1 ? '' : 's'}` : message);
+  if (filled || seeds.length > 1) offerUndo(before);
+  renderRoute({ keepScroll: true });
+}
+function snapshotLevels() { return { buildings: { ...state.buildings }, research: { ...state.research } }; }
+function offerUndo(before) {
+  const toast = $('#toast');
+  const button = document.createElement('button'); button.type = 'button'; button.className = 'toast-undo'; button.textContent = 'Undo';
+  button.addEventListener('click', () => { state.buildings = before.buildings; state.research = before.research; save('Undone'); renderRoute({ keepScroll: true }); });
+  toast.append(' ', button); clearTimeout(save.timer); save.timer = setTimeout(() => toast.classList.remove('show'), 6000);
+}
+
+function planGoal(kind, id, level) {
+  const { need, currentOf, require } = prereqSolver();
   require(`${kind}:${id}`, level);
   const bonus = speedBonuses();
   const steps = [...need.entries()].map(([key, target]) => {
@@ -728,13 +775,16 @@ function buildingCard(def, slots) {
       <div class="building-levels"><span>${slots.length > 1 ? 'LEVELS' : 'LEVEL'}</span><b>${levels.join(' · ')}</b>${allMax ? '<small class="plan-ready">MAX</small>' : ''}</div>
       ${plan.any ? `<div class="building-plan"><span>TO TARGET</span>${costChips(plan, 'building', def.name)}</div>` : ''}
     </summary>
-    <div class="copy-rows">${rows}</div></details>`;
+    <div class="copy-rows">${slots.length > 1 && unlocked.length ? `<div class="bulk-row"><span>ALL ${unlocked.length} UNLOCKED COPIES</span><label>LEVEL<input class="bulk-level" type="number" min="1" max="${def.max}" value="${Math.max(...unlocked.map(item => Number(state.buildings[item.name]) || 0))}"></label><button type="button" class="button secondary" data-bulk-set="${def.id}">Set all</button><button type="button" class="button secondary" data-bulk-max="${def.id}">Max all</button></div>` : ''}${rows}</div></details>`;
+}
+function autoFillToggle() {
+  return `<label class="check" title="Raising a level also raises the buildings and research it needed"><input class="auto-fill-toggle" type="checkbox" ${state.prefs.autoFill ? 'checked' : ''}> Auto-fill prerequisites</label>`;
 }
 function constructionPage() {
   pageHeader('SETTLEMENT', 'Construction');
   return `<section class="page-intro"><div><p class="eyebrow">BUILDING DIRECTORY</p><h2>Your settlement levels</h2><p>Tap a building to open it and set each copy's level and target. The closed card shows your levels and the total cost to your targets.</p></div><div class="completion-ring"><strong>HQ ${hqLevel()}</strong><span>${buildings.filter(item => !isLocked(item)).length} / ${buildings.length} UNLOCKED</span></div></section>
   ${bonusPanel()}
-  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide locked buildings and copies</label><span class="toolbar-actions"><button type="button" class="button secondary" data-cards="open">Open all</button><button type="button" class="button secondary" data-cards="close">Close all</button></span></section>
+  <section class="toolbar"><label>SEARCH<input id="buildingSearch" type="search" placeholder="Find a building" value="${escapeHtml(ui.buildingSearch)}"></label><label class="check"><input id="hideLocked" type="checkbox" ${ui.hideLocked ? 'checked' : ''}> Hide locked buildings and copies</label>${autoFillToggle()}<button type="button" class="button secondary" data-fill-all>Fill missing prerequisites</button><span class="toolbar-actions"><button type="button" class="button secondary" data-cards="open">Open all</button><button type="button" class="button secondary" data-cards="close">Close all</button></span></section>
   ${constructionGroups.map(group => { const levels = group.buildings.reduce((sum, item) => sum + (Number(state.buildings[item.name]) || 0), 0); const max = group.buildings.reduce((sum, item) => sum + item.def.max, 0); return `<details class="construction-group" data-group="${group.name}" ${ui.collapsed.has(group.name) ? '' : 'open'}><summary><div><p class="eyebrow">CONSTRUCTION</p><h2>${group.name}</h2></div><span>${new Set(group.buildings.map(item => item.def)).size} ${group.buildings.length === 1 ? 'BUILDING' : 'BUILDINGS'} · ${levels} / ${max} LEVELS</span><span class="group-actions"><button type="button" class="button secondary" data-group-target="max" data-group-name="${group.name}">Target max</button><button type="button" class="button secondary" data-group-target="clear" data-group-name="${group.name}">Clear targets</button></span></summary><div class="building-list">${[...new Set(group.buildings.map(item => item.def))].map(def => buildingCard(def, group.buildings.filter(item => item.def === def))).join('')}</div></details>`; }).join('')}
   <p class="source-note">Times include the speed bonuses above. Resource costs include the research building cost cut and flat cost cuts. Event bonuses are not applied.</p>`;
 }
@@ -783,7 +833,8 @@ function researchDetail(node) {
     <div class="node-level">${levelControl('research', node.id, level, node.max)}<small>${level >= node.max ? 'Maxed' : `Level ${level} of ${node.max}`}</small></div>
     ${effects ? `<ul class="node-effects">${effects}</ul>` : ''}
     ${level < node.max ? `<p class="eyebrow">${level ? 'NEXT LEVEL NEEDS' : 'UNLOCK NEEDS'}</p><ul class="node-reqs">${reqs.length ? reqs.map(req => `<li class="${requirementMet(req) ? 'met' : ''}">${requirementMet(req) ? '✓' : '✗'} ${escapeHtml(requirementLabel(req))}</li>`).join('') : '<li class="met">✓ Nothing</li>'}</ul>` : ''}
-    ${targetControl('research', String(node.id), level, node.max)}</aside>`;
+    ${targetControl('research', String(node.id), level, node.max)}
+    ${node.parents.length ? `<button type="button" class="button secondary path-max" data-path-max="${node.id}">Max this node and every node before it</button>` : ''}</aside>`;
 }
 function researchPage() {
   pageHeader('TECH LAB', 'Research');
@@ -796,6 +847,7 @@ function researchPage() {
     const total = nodes.reduce((sum, node) => sum + node.max, 0);
     const selected = researchById.get(ui.selectedNode[selectedTree.gameId]) || nodes.find(node => nodeStatus(node) === 'available' || nodeStatus(node) === 'progress') || nodes[0];
     return `<div class="tree-head"><a class="source-link" href="#research">← All trees</a><div><p class="eyebrow">RESEARCH TREE</p><h2>${escapeHtml(selectedTree.name)}</h2>${nextLevelNeeds(selectedTree.req)}</div><div class="completion-ring"><strong>${done} / ${total}</strong><span>LEVELS</span></div></div>
+      <div class="tree-tools">${autoFillToggle()}<button type="button" class="button secondary" data-tree-max="${selectedTree.gameId}">Max whole tree</button><button type="button" class="button secondary" data-tree-clear="${selectedTree.gameId}">Reset tree to 0</button></div>
       <div class="tree-legend"><span class="maxed">Maxed</span><span class="progress">In progress</span><span class="available">Ready to start</span><span class="locked">Locked</span><small>Tap a node to set its level and target.</small></div>
       <div class="tree-layout">${researchTreeMarkup(selectedTree, selected)}${researchDetail(selected)}</div>`;
   }
@@ -845,9 +897,11 @@ const roadmap = [
   { title: 'Server tracker', status: 'Planned', text: 'Track server activity: player counts, top power, new arrivals, and the event schedule for your server.', needs: 'A shared database that members or a bot feed, since the site has no server access on its own.' },
   { title: 'Alliance tracker', status: 'Planned', text: 'Track your alliance power, membership, and joins and leaves over time. Members can sync their base stats to show alliance totals and averages.', needs: 'Member sync through a shared database.' },
   { title: 'VS tracker', status: 'Planned', text: 'Record VS scores per day and per member, show participation history, and flag missed days.', needs: 'Daily score entry or screenshot import.' },
-  { title: 'Screenshot import', status: 'Idea', text: 'Upload a game screenshot, such as your resource totals or a building screen, and the site reads the numbers and fills them in for you.', needs: 'Image text recognition. It can run in the browser, so screenshots never leave your device.' },
+  { title: 'Quick entry', status: 'Done', text: 'Raising a level also fills in the buildings and research it needed (with Undo). Set or max all copies of a building at once, max a whole research tree, or max a node and every node before it.' },
+  { title: 'Screenshot import', status: 'Next', text: 'Upload a game screenshot, such as your resource totals or a building screen, and the site reads the numbers and fills them in for you.', needs: 'Image text recognition. It can run in the browser, so screenshots never leave your device.' },
   { title: 'Inventory and "can I afford it"', status: 'Idea', text: 'Enter what you own (resources, speedups, gear materials, chips) and see what is left to farm for each target, plus how long your production takes to cover it.' },
   { title: 'Event calendar', status: 'Idea', text: 'Upcoming events and season unlocks with reminders, so you save speedups and resources for the right day.' },
+  { title: 'Export and import code', status: 'Planned', text: 'Copy all your saved levels as one code and paste it on another device, so nobody types their data twice.' },
   { title: 'Share and compare plans', status: 'Idea', text: 'Export your profile as a link so alliance leaders can see member progress and compare plans.' },
   { title: 'Formation builder', status: 'Idea', text: 'Build squads from your roster and compare hero power, classes, and gear.' },
   { title: 'Alliance research and survivors', status: 'Needs data', text: 'Replace the manual observation pages with full cost tables once the game data is found.' }
@@ -1006,11 +1060,51 @@ function bindPageControls() {
     const stepper = input.closest('.level-stepper');
     if (stepper) stepper.append(button); else input.after(button);
   });
+  document.querySelectorAll('.auto-fill-toggle').forEach(box => box.addEventListener('change', () => { state.prefs.autoFill = box.checked; save(box.checked ? 'Auto-fill on' : 'Auto-fill off'); renderRoute({ keepScroll: true }); }));
+  $('[data-fill-all]')?.addEventListener('click', () => {
+    const before = snapshotLevels(); const filled = fillPrerequisites(everythingSet());
+    save(filled ? `Filled ${filled} prerequisite${filled === 1 ? '' : 's'}` : 'Nothing missing'); if (filled) offerUndo(before); renderRoute({ keepScroll: true });
+  });
+  const bulkSet = (defId, level) => {
+    const before = snapshotLevels(); const def = buildingDefById.get(defId); const value = Math.max(1, Math.min(def.max, level));
+    // Fill prerequisites first so copies unlocked by a higher HQ are included.
+    const filled = state.prefs.autoFill ? fillPrerequisites([['b', defId, value]]) : 0;
+    const copies = slotsByDefId(defId).filter(item => !isLocked(item));
+    copies.forEach(item => { state.buildings[item.name] = value; });
+    save(`Set ${copies.length} copies${filled ? `. Filled ${filled} prerequisite${filled === 1 ? '' : 's'}` : ''}`); offerUndo(before); renderRoute({ keepScroll: true });
+  };
+  document.querySelectorAll('[data-bulk-set]').forEach(button => button.addEventListener('click', () => bulkSet(Number(button.dataset.bulkSet), Number(button.parentElement.querySelector('.bulk-level').value) || 1)));
+  document.querySelectorAll('[data-bulk-max]').forEach(button => button.addEventListener('click', () => bulkSet(Number(button.dataset.bulkMax), buildingDefById.get(Number(button.dataset.bulkMax)).max)));
+  const treeNodes = gameId => researchNodes.filter(node => node.tree === gameId);
+  $('[data-tree-max]')?.addEventListener('click', event => {
+    const before = snapshotLevels(); const nodes = treeNodes(Number(event.currentTarget.dataset.treeMax));
+    nodes.forEach(node => { state.research[node.id] = node.max; });
+    commitLevels(before, `Maxed ${nodes.length} nodes`, nodes.map(node => ['r', node.id, node.max]));
+  });
+  $('[data-tree-clear]')?.addEventListener('click', event => {
+    if (!confirm('Set every node in this tree to level 0?')) return;
+    const before = snapshotLevels(); treeNodes(Number(event.currentTarget.dataset.treeClear)).forEach(node => { delete state.research[node.id]; });
+    save('Tree reset'); offerUndo(before); renderRoute({ keepScroll: true });
+  });
+  $('[data-path-max]')?.addEventListener('click', event => {
+    const before = snapshotLevels(); const seen = new Set();
+    const walk = id => { if (seen.has(id)) return; seen.add(id); researchById.get(id)?.parents.forEach(walk); };
+    walk(Number(event.currentTarget.dataset.pathMax));
+    const nodes = [...seen].map(id => researchById.get(id)).filter(Boolean);
+    nodes.forEach(node => { state.research[node.id] = Math.max(researchLevel(node.id), node.max); });
+    commitLevels(before, `Maxed ${nodes.length} nodes`, nodes.map(node => ['r', node.id, node.max]));
+  });
   document.querySelectorAll('.level-stepper').forEach(control => {
     const input = control.querySelector('input');
     const update = value => {
       const max = Number(input.max); const level = Math.max(Number(input.min), Math.min(max, Number(value) || 0));
-      input.value = level; state[control.dataset.group][control.dataset.name] = level; save(); renderRoute({ keepScroll: true });
+      input.value = level;
+      const before = snapshotLevels(); const group = control.dataset.group; const name = control.dataset.name;
+      if ((Number(state[group][name]) || 0) === level) return;
+      state[group][name] = level;
+      if (group === 'buildings') commitLevels(before, 'Level saved', [['b', buildingSlot(name).def.id, level]]);
+      else if (group === 'research') commitLevels(before, 'Level saved', [['r', Number(name), level]]);
+      else { save(); renderRoute({ keepScroll: true }); }
     };
     input.addEventListener('change', () => update(input.value));
     control.querySelectorAll('button[data-change]').forEach(button => button.addEventListener('click', () => update(Number(input.value) + Number(button.dataset.change))));

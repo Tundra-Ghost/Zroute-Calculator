@@ -4,7 +4,7 @@ A responsive, browser-based progress tracker and planning dashboard for **Z Rout
 
 The local profile is pinned to server 52 and ExpeditionCorps `[ExC]` for this release. It includes a calculated power breakdown for hero, soldier, building, tech, and fighter power. Unknown power and upgrade values remain visibly marked and default to zero rather than being guessed. The Filter tab searches the combined building, hero, survivor, research, and alliance directories, while each upgrade target displays a prominent resource-and-time requirement panel.
 
-The hero directory is grouped into Warrior, Assault, and Tactical classes and records rarity, formation type, ownership, HQ-based level caps, five-star shard progress, and the quality of all four equipment pieces. The survivor directory supports custom Other, SSR, and Mythic survivors, building assignments, recorded benefits, and the same five-part star system.
+The hero directory is grouped into Warrior, Assault, and Tactical classes, sorted UR first. Each owned hero has Level Up, Skill and Star Up tabs like the game: level and gear, a 2×2 skill grid with names, effects and star bonuses, and star power by step or by shards invested. The survivor directory supports custom Other, SSR, and Mythic survivors, building assignments, recorded benefits, and the same five-part star system.
 
 Building, research, and hero costs come from the game data in `data/source/`. Every building copy and research node has a level, a target, and a cost panel. With no target set, the panel shows the next level. Unmet requirements for the next level are listed on each card. The **Goal planner** takes a building or research goal and adds every missing prerequisite, then totals the resources and time. Build and research times use your VIP level, your saved research speed bonuses, and any extra bonus you enter.
 
@@ -12,7 +12,9 @@ The **Resources** page shows hourly output from your producer buildings and outp
 
 Each hero gear slot (SR, SSR or UR) has a level and a target. UR gear continues past level 40 into 25 promotion stages. The Resources page also lists crafting and upgrade costs per gear quality.
 
-The **Roadmap** page lists planned features.
+**Quick entry.** Raising a building or research level also fills in the prerequisites it needed, with an Undo. Buildings with copies can set or max all copies at once. Research trees can be maxed in one click. Every level input has a MAX button, and targets start at the next level.
+
+The **Roadmap** page lists planned features. See [docs/PLANS.md](docs/PLANS.md) for detail and decisions, and [docs/CHANGELOG.md](docs/CHANGELOG.md) for what changed.
 
 Research that adds a building copy (Extra Farm, Extra Foundry, Additional Oil Extraction Plant, Hospital Expansion, Drill Ground Addition, Training Camp Addition) unlocks one more copy of that building. Flat construction and research cost cuts are taken off each level.
 
@@ -22,7 +24,7 @@ Alliance research and survivors are not in the game data yet. Those still use ob
 
 ## Game data
 
-The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, `equipment.json`, `fighter.json`, about 7.5 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
+The raw exports live in `data/source/` (`progression.json`, `heroes.json`, `resources.json`, `equipment.json`, `fighter.json`, `research_layout.json`, `hero_skills.json`, about 7.5 MB). The browser does not load them. Instead, a script compacts them into `data/game-data.js` (about 250 KB), which the page loads with a plain script tag:
 
 ```bash
 python3 tools/build_game_data.py
