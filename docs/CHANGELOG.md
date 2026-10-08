@@ -11,6 +11,9 @@ Newest first. Dates are when the change went live on `main`.
 - Buildings with copies have **Set all** and **Max all** for every unlocked copy.
 - Research trees have **Max whole tree** and **Reset tree to 0**. A node has **Max this node and every node before it**.
 
+### Research
+- Fully upgraded research trees show a "Max level reached" banner on the tree card and the tree page.
+
 ### Levels and targets
 - Every level input has a **MAX** button.
 - Targets start at the next level. A saved target above the current level (custom or max) is kept. A maxed item has no target to edit.

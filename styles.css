@@ -216,3 +216,9 @@ details.panel.grand-plan[open]>summary{margin-bottom:14px}
 .toast-undo{margin-left:10px;padding:3px 10px;border:1px solid currentColor;background:transparent;color:inherit;font:700 10px var(--body);cursor:pointer}
 .toast{pointer-events:auto}
 .status.done{background:#2a3d17;color:#c6ef8a}.status.next{background:#5a2f1b;color:#ffb48a}
+/* Fully upgraded research trees */
+.research-tree-image{position:relative}
+.max-banner{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);z-index:2;padding:6px 4px;text-align:center;background:linear-gradient(90deg,transparent,rgba(120,84,24,.95) 15%,rgba(120,84,24,.95) 85%,transparent);color:#ffe2a6;font:700 13px var(--display);letter-spacing:1.5px;text-shadow:0 1px 2px #000}
+.max-banner.wide{position:static;transform:none;margin:12px 0;padding:10px;font-size:18px;border-top:1px solid #8a6a2a;border-bottom:1px solid #8a6a2a}
+.research-tree-card.maxed{border-color:#8a6a2a}
+.tree-tools .check{font-size:11px;color:#b7c0bb;display:flex;align-items:center;gap:6px}
