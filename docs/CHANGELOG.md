@@ -25,6 +25,8 @@ Copied from github.com/JeffxLabs/zrouteredemption and github.com/JeffxLabs/P1MP-
 - The site checks for a newer release and shows a "Reload" banner, since GitHub Pages can serve a cached page for up to 10 minutes.
 
 ### Research
+- Trees use the game's own grid (row and column) and link lines, so nodes sit where they do in game. Max levels were checked against the game layout for all 15 trees and all match.
+- Tree pages show progress by levels, nodes maxed, power, time and average per node.
 - Fully upgraded research trees show a "Max level reached" banner on the tree card and the tree page.
 
 ### Levels and targets

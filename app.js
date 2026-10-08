@@ -800,6 +800,12 @@ function nodeStatus(node) {
 }
 // Rows follow prerequisite depth. Each row holds up to three nodes, ordered under their parents.
 function treeLayout(nodes) {
+  // The game's own grid when every node has one: row and column (1 to 3).
+  if (nodes.length && nodes.every(node => node.row && node.col)) {
+    const rows = []; const column = new Map(); const rowOf = new Map();
+    nodes.forEach(node => { (rows[node.row - 1] ||= []).push(node); column.set(node.id, node.col - 1); rowOf.set(node.id, node.row - 1); });
+    return { rows: Array.from(rows, row => row || []), column, rowOf, links: node => node.links || [] };
+  }
   const rows = []; const column = new Map();
   nodes.forEach(node => { (rows[node.tier] ||= []).push(node); });
   const slots = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
@@ -809,7 +815,7 @@ function treeLayout(nodes) {
     const places = slots[row.length] || row.map((_, index) => index * 2 / Math.max(1, row.length - 1));
     row.forEach((node, index) => column.set(node.id, places[index]));
   });
-  return { rows, column };
+  return { rows, column, rowOf: new Map(nodes.map(node => [node.id, node.tier])), links: node => node.parents };
 }
 // What a locked node still needs before its first level.
 function lockNote(node) {
@@ -819,11 +825,11 @@ function lockNote(node) {
 }
 function researchTreeMarkup(tree, selected) {
   const nodes = nodesInTree(tree);
-  const { rows, column } = treeLayout(nodes);
+  const { rows, column, rowOf, links } = treeLayout(nodes);
   const rowHeight = 128; const tileHeight = 98; const height = rows.length * rowHeight;
   const x = id => (column.get(id) * 2 + 1) * 100;
-  const y = node => node.tier * rowHeight + rowHeight / 2;
-  const lines = nodes.flatMap(node => node.parents.map(id => { const parent = researchById.get(id); return `<line class="${researchLevel(id) > 0 ? 'done' : ''}" x1="${x(id)}" y1="${y(parent) + tileHeight / 2}" x2="${x(node.id)}" y2="${y(node) - tileHeight / 2}" vector-effect="non-scaling-stroke"/>`; })).join('');
+  const y = node => rowOf.get(node.id) * rowHeight + rowHeight / 2;
+  const lines = nodes.flatMap(node => links(node).map(id => { const parent = researchById.get(id); if (!parent || !rowOf.has(id)) return ''; return `<line class="${researchLevel(id) > 0 ? 'done' : ''}" x1="${x(id)}" y1="${y(parent) + tileHeight / 2}" x2="${x(node.id)}" y2="${y(node) - tileHeight / 2}" vector-effect="non-scaling-stroke"/>`; })).join('');
   const tiles = nodes.map(node => { const level = researchLevel(node.id); return `<button type="button" class="tree-node ${nodeStatus(node)} ${selected?.id === node.id ? 'selected' : ''}" data-node="${node.id}" style="left:${x(node.id) / 6}%;top:${y(node) - tileHeight / 2}px;height:${tileHeight}px">${iconImg(node.icon, 'node-icon')}<b>${escapeHtml(node.name)}</b><small>LV ${level} / ${node.max}</small>${lockNote(node)}<i style="--fill:${level / node.max * 100}%"></i></button>`; }).join('');
   return `<div class="research-tree" style="height:${height}px"><svg viewBox="0 0 600 ${height}" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>${tiles}</div>`;
 }

@@ -169,6 +169,15 @@ def build_research(progression, layout):
             'icon': icon('research', node_icons.get(raw['id'], '')),
         })
     add_tree_layout(nodes)
+    # Use the game's own grid (row, column) and link lines when the layout has the node.
+    positions = {}
+    for tree in layout['trees']:
+        by_pos = {tech['pos']: tech['id'] for tech in tree['techs']}
+        for tech in tree['techs']:
+            positions[tech['id']] = (tech['row'], tech['col'], [by_pos[pos] for pos in tech['from'] if pos in by_pos])
+    for node in nodes:
+        if node['id'] in positions:
+            node['row'], node['col'], node['links'] = positions[node['id']]
     return trees, nodes
 
 

@@ -44,5 +44,6 @@ Upload game screenshots (building list, research tree, hero screen, resource tot
 - Alliance research costs.
 - Hero level cap per HQ is inferred.
 - Flat cost cut units (treated as a fixed amount per level) and the research "Barracks" copy (mapped to Soldier Training Camp) are inferred.
+- Alliance Competition: the game layout has 14 nodes but the data export has costs for only 10 (9011 to 9014 missing).
 - Uranium and antibody have no icons.
 - Gear icons: UR art is cropped from Tanner's screenshot. SR and SSR reuse it, recolored. Need SR/SSR gear screenshots for the real art.
