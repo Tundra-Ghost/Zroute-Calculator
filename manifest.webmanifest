@@ -1,0 +1,11 @@
+{
+  "name": "Z Route Command Center",
+  "short_name": "Z Route",
+  "description": "Upgrade calculator and planner for Z Route: Redemption.",
+  "start_url": "./#overview",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090d0d",
+  "theme_color": "#0b100f",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

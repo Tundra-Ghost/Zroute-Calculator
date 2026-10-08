@@ -643,6 +643,7 @@ function resourcesPage() {
       <article><span>GENERAL SPEEDUPS SPARE</span><strong>${formatDuration(coverage.generalLeft)}</strong></article>
     </div><p>Build and research speedups go first. General speedups then cover building time, then research time.</p></details>
     <form id="speedupForm" class="speedup-form power-fields">${groups}</form>
+    ${window.producerRoiPanel?.() || ''}
     ${gearReference()}`;
 }
 function gearReference() {
@@ -909,14 +910,19 @@ function fighterPage() {
 const roadmap = [
   { title: 'Server tracker', status: 'Planned', text: 'Track server activity: player counts, top power, new arrivals, and the event schedule for your server.', needs: 'A shared database that members or a bot feed, since the site has no server access on its own.' },
   { title: 'Alliance tracker', status: 'Planned', text: 'Track your alliance power, membership, and joins and leaves over time. Members can sync their base stats to show alliance totals and averages.', needs: 'Member sync through a shared database.' },
-  { title: 'VS tracker', status: 'Planned', text: 'Record VS scores per day and per member, show participation history, and flag missed days.', needs: 'Daily score entry or screenshot import.' },
+  { title: 'VS tracker', status: 'Planned', text: 'Record VS scores per day and per member, show participation history, and flag missed days. Modeled on the P1MP VS dashboard: quota check, week-by-week grid, player profiles and opponent scouting.', needs: 'Daily score entry or screenshot import, and the shared database.' },
   { title: 'Quick entry', status: 'Done', text: 'Raising a level also fills in the buildings and research it needed (with Undo). Set or max all copies of a building at once, max a whole research tree, or max a node and every node before it.' },
   { title: 'Screenshot import', status: 'Next', text: 'Upload a game screenshot, such as your resource totals or a building screen, and the site reads the numbers and fills them in for you.', needs: 'Image text recognition. It can run in the browser, so screenshots never leave your device.' },
   { title: 'Inventory and "can I afford it"', status: 'Idea', text: 'Enter what you own (resources, speedups, gear materials, chips) and see what is left to farm for each target, plus how long your production takes to cover it.' },
   { title: 'Event calendar', status: 'Idea', text: 'Upcoming events and season unlocks with reminders, so you save speedups and resources for the right day.' },
-  { title: 'Export and import code', status: 'Planned', text: 'Copy all your saved levels as one code and paste it on another device, so nobody types their data twice.' },
-  { title: 'Share and compare plans', status: 'Idea', text: 'Export your profile as a link so alliance leaders can see member progress and compare plans.' },
-  { title: 'Formation builder', status: 'Idea', text: 'Build squads from your roster and compare hero power, classes, and gear.' },
+  { title: 'Backup and share', status: 'Done', text: 'Copy all your data as one code, a share link, or a file, and load it on another device.' },
+  { title: 'VS days', status: 'Done', text: 'What each Alliance Competition day rewards, and what your plan has saved up for it.' },
+  { title: 'Squad planner', status: 'Done', text: 'Build four squads from your roster. See the lineup bonus, counters, and row warnings.' },
+  { title: 'Hero EXP items and producer ROI', status: 'Done', text: 'Hero EXP chests sized for your HQ against your roster needs, and the payback time of every Food, Metal and Oil upgrade.' },
+  { title: 'Promo codes and offline use', status: 'Done', text: 'A promo code list with used checkboxes. The site can be added to your home screen and opens offline.' },
+  { title: 'Capitol war rankings', status: 'Idea', text: 'Player and alliance rankings for Capitol war events, like the S117 rankings site.', needs: 'Screenshot import and the shared database.' },
+  { title: 'Translations', status: 'Idea', text: 'Show the site in other languages for alliance members.' },
+  { title: 'Compare plans', status: 'Idea', text: 'Alliance leaders open members\' share links side by side to compare progress.' },
   { title: 'Alliance research and survivors', status: 'Needs data', text: 'Replace the manual observation pages with full cost tables once the game data is found.' }
 ];
 function roadmapPage() {
@@ -930,6 +936,7 @@ function heroesPage() {
   const cap = heroCap();
   return `<section class="page-intro hero-intro"><div><p class="eyebrow">HERO DIRECTORY</p><h2>Your hero roster</h2><p>Track ownership, levels, star power, skills, and equipment. Your HQ ${hqLevel()} hero level cap is ${cap}.</p></div><div class="hero-cap"><span>HERO LEVEL CAP</span><strong>${cap}</strong><small>HQ 30 max · −5 per HQ level</small></div></section>
   <div class="hero-legend"><span><i class="rarity SR">SR</i> Rare</span><span><i class="rarity SSR">SSR</i> Super rare</span><span><i class="rarity UR">UR</i> Ultimate rare</span><span>FL · Frontline</span><span>BL · Backline</span><span>S · Support</span></div>
+  ${window.heroExpPanel?.() || ''}
   <section class="toolbar"><label class="check"><input id="heroOwnedOnly" type="checkbox" ${ui.heroOwnedOnly ? 'checked' : ''}> Show only heroes in my roster</label><span class="toolbar-actions"><button type="button" class="button secondary" data-heroes="open">Open all</button><button type="button" class="button secondary" data-heroes="close">Close all</button></span></section>
   ${['Warrior','Assault','Tactical'].map(heroClass => { const list = heroes.filter(item => item.heroClass === heroClass); const shown = ui.heroOwnedOnly ? list.filter(item => state.ownedHeroes.includes(item.id)) : list; const owned = list.filter(item => state.ownedHeroes.includes(item.id)).length; return shown.length ? `<details open class="panel hero-class"><summary>${iconImg(GAME.classIcons?.[heroClass], 'class-icon')}<div><p class="eyebrow">HERO CLASS</p><h2>${heroClass}</h2></div><span>${owned} / ${list.length} OWNED</span></summary><div class="hero-grid">${shown.map(item => heroCard(item, list.indexOf(item), cap)).join('')}</div></details>` : ''; }).join('') || '<p class="empty-note">No heroes in your roster yet. Untick the filter to add some.</p>'}
   <p class="source-note">Hero EXP, star shards (5 / 10 / 20 / 60 / 100 per subsection, 975 total), and skill books come from the game data. Skill level caps rise with stars.</p>`;

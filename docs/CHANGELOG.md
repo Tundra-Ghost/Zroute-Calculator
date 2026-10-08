@@ -4,6 +4,16 @@ Newest first. Dates are when the change went live on `main`.
 
 ## 2026-10-08
 
+### Ideas from Jeff's tools
+Copied from github.com/JeffxLabs/zrouteredemption and github.com/JeffxLabs/P1MP-VS.
+- **VS days** page: what each Alliance Competition day rewards and how many wins it gives. Today's server day (UTC−2) is highlighted. Each day shows what your plan has for it, such as Hero EXP points, build time or research data.
+- **Squads** page: four squads with 2 front and 3 back slots, picked from your roster. Shows the lineup bonus, the counter triangle, and warns about heroes in the wrong row or used twice. Includes squad tips.
+- **Hero EXP items** on the Heroes page: R/SR/SSR/UR chests sized for your HQ level, your owned EXP, what your roster needs to its targets and to the HQ level cap, and the VS points your EXP is worth (1 per 650, plus Points Buff research).
+- **Producer ROI** on the Resources page: every Food, Metal and Oil building's next upgrade, ranked by payback time. Set how much each resource is worth to you.
+- **Backup and share** page: copy all your data as a code or a share link, download a file, and load any of them on another device.
+- **Promo codes** page: copy codes, tick them off once used, and add new ones.
+- The site can be installed to a phone home screen and opens offline. It always loads the newest version when online.
+
 ### Quick entry
 - Raising a building or research level also raises the prerequisites it needed. For example, setting HQ 20 fills in the buildings HQ 20 required. Levels are never lowered. A toast offers **Undo**.
 - "Auto-fill prerequisites" can be switched off on the Construction page and on each research tree.

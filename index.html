@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b100f">
   <title>Z Route Command Center</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=202610080915">
+  <link rel="stylesheet" href="styles.css?v=202610081000">
 </head>
 <body>
   <aside class="sidebar" id="sidebar">
@@ -21,13 +24,17 @@
       <a class="nav-link" href="#resources" data-route="resources"><span>◈</span> Resources</a>
       <a class="nav-link" href="#alliance" data-route="alliance"><span>◇</span> Alliance research</a>
       <a class="nav-link" href="#heroes" data-route="heroes"><span>♙</span> Heroes</a>
+      <a class="nav-link" href="#squads" data-route="squads"><span>⚔</span> Squads</a>
       <a class="nav-link" href="#fighter" data-route="fighter"><span>✈</span> Fighter</a>
+      <a class="nav-link" href="#vs" data-route="vs"><span>⚑</span> VS days</a>
       <a class="nav-link" href="#survivors" data-route="survivors"><span>♟</span> Survivors</a>
       <a class="nav-link" href="#filter" data-route="filter"><span>≡</span> Filter</a>
       <a class="nav-link" href="#data" data-route="data"><span>▤</span> Upgrade data</a>
+      <a class="nav-link" href="#codes" data-route="codes"><span>✉</span> Promo codes</a>
+      <a class="nav-link" href="#backup" data-route="backup"><span>⇅</span> Backup and share</a>
       <a class="nav-link" href="#roadmap" data-route="roadmap"><span>➜</span> Roadmap</a>
     </nav>
-    <div class="side-card"><span class="signal"><i></i> LOCAL PROFILE</span><b>Your data, your device</b><p>Levels and preferences are saved only in this browser.</p></div>
+    <div class="side-card"><span class="signal"><i></i> LOCAL PROFILE</span><b>Your data, your device</b><p>Levels and preferences are saved only in this browser. <a href="#backup">Back up or share</a>.</p></div>
     <button class="reset" id="resetData">↻ &nbsp; Reset all progress</button>
   </aside>
 
@@ -114,7 +121,8 @@
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="data/game-data.js?v=202610080915"></script>
-  <script src="app.js?v=202610080915"></script>
+  <script src="data/game-data.js?v=202610081000"></script>
+  <script src="app.js?v=202610081000"></script>
+  <script src="features.js?v=202610081000"></script>
 </body>
 </html>

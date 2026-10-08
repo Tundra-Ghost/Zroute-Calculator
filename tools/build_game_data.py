@@ -2,7 +2,7 @@
 """Compact the raw game JSON exports into one small file the app can load.
 
 Reads data/source/progression.json, heroes.json, resources.json, research_layout.json,
-equipment.json and fighter.json and writes
+equipment.json, fighter.json, hero_exp.json, vs_stages.json and squad.json and writes
 data/game-data.js. Run it again whenever the source files change:
 
     python3 tools/build_game_data.py
@@ -298,6 +298,24 @@ def build_heroes(heroes_raw, skill_info):
     return heroes, exp_curves, skill_curves, star_shards, promoted_shards, skill_limits
 
 
+def build_hero_exp(raw):
+    """Hero EXP chests by HQ level and the VS points rule for Hero EXP."""
+    competition = raw['alliance_competition']
+    return {
+        'chests': [{'grade': chest['grade'], 'name': chest['name'],
+                    'expByHq': [row['exp'] for row in sorted(chest['exp_by_hq'], key=lambda row: row['hq'])]}
+                   for chest in raw['chests']],
+        'battleItem': {'name': raw['battle_exp_item']['name'], 'exp': raw['battle_exp_item']['exp']},
+        'vsExpPerPoint': competition['sources'][0]['exp'],
+        'vsPointsBenefit': competition['sources'][0]['boost_benefit'],
+    }
+
+
+def build_vs(raw):
+    return [{'day': stage['day_of_week'], 'name': stage['short_name'], 'wins': stage['wins_awarded'],
+             'about': stage['description'], 'activities': stage['activities']} for stage in raw['stages']]
+
+
 def main():
     progression = load('progression.json')
     heroes_raw = load('heroes.json')
@@ -334,6 +352,9 @@ def main():
         'gear': build_gear(equipment),
         'fighter': build_fighter(fighter),
         'gearShards': [step['fragment_count'] for step in sorted(heroes_raw['exclusive_gear_level_curve'], key=lambda step: step['id'])],
+        'heroExpItems': build_hero_exp(load('hero_exp.json')),
+        'vsDays': build_vs(load('vs_stages.json')),
+        'squad': load('squad.json'),
     }
     body = json.dumps(data, separators=(',', ':'), ensure_ascii=False)
     OUTPUT.write_text(
